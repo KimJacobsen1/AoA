@@ -1,129 +1,310 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Age of Adventure – Character Creator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=EB+Garamond&display=swap" rel="stylesheet">
   <style>
-    body { font-family: "Garamond", serif; background: #f2efe6; margin: 20px; }
-    h1 { text-align: center; }
-    .step { display:none; border: 2px solid #444; padding: 15px; margin: 15px 0; border-radius: 10px; background: white; }
-    .active { display:block; }
-    button { margin: 5px; padding: 8px 12px; border:none; border-radius:5px; cursor:pointer; }
-    .next-btn { background:#333; color:#fff; }
-    .buy-btn { background:#666; color:#fff; padding:4px 8px; }
-    .print-btn { background:#4CAF50; color:#fff; padding:8px 12px; }
-    .sheet { border: 3px solid #333; padding: 15px; margin-top: 20px; border-radius: 12px; background:#fff; }
+    body { font-family: "EB Garamond", serif; background:#f4f0e6; margin:0; padding:20px; color:#2c2c2c; }
+    h1 { text-align:center; font-size:2.6em; margin:10px 0 20px; color:#3a2c1a; font-family:"Cinzel", serif; }
+    h2 { color:#3a2c1a; border-bottom:1px solid #b8a97f; padding-bottom:4px; margin-bottom:12px; font-size:1.4em; font-family:"Cinzel", serif; }
+    h3, h4 { font-family:"Cinzel", serif; margin:10px 0; }
+    .step { border:2px solid #b8a97f; padding:20px; margin:20px auto; border-radius:10px; background:#fffdf9; max-width:980px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    .sheet { border:2px solid #b8a97f; padding:18px 20px; margin:24px auto 40px; border-radius:12px; background:#fffef9; max-width:820px; box-shadow:0 6px 18px rgba(0,0,0,0.12); }
+    .sheet h2 { text-align:center; font-size:2em; color:#3a2c1a; margin-bottom:12px; }
+    .section { margin:10px 0 16px; }
+    .section h4 { margin:0 0 6px; font-size:1.05em; color:#3a2c1a; }
+    .hr { height:1px; background:#b8a97f; opacity:.8; border:none; margin:10px 0; }
     ul { margin:0; padding-left:20px; }
+    li { margin:2px 0; }
+    input, textarea, select { padding:8px; margin:6px 0; border:1px solid #ccc; border-radius:6px; font-family:inherit; font-size:1em; width:100%; box-sizing:border-box; }
+    textarea { min-height:80px; }
+    .avatar-wrap { display:flex; gap:14px; align-items:flex-start; }
+    .avatar { width:140px; height:140px; border:2px solid #b8a97f; border-radius:10px; object-fit:cover; background:#eee; }
+    .avatar-note { font-size:.9em; color:#5a4b38; }
+    .tools-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:16px; }
+    .tool-card { border:1px dashed #b8a97f; border-radius:10px; padding:12px; background:#fffefb; }
+    .btn { margin:6px 4px; padding:10px 16px; border:none; border-radius:6px; font-size:1em; cursor:pointer; font-weight:bold; transition:transform .15s, background .25s; font-family:"Cinzel", serif; }
+    .next-btn { background:#6a5234; color:#fff; } .next-btn:hover { background:#856947; transform:scale(1.05); }
+    .buy-btn { background:#8b7355; color:#fff; padding:6px 12px; margin:3px; font-size:.9em; } .buy-btn:hover { background:#a18767; transform:scale(1.05); }
+    .print-btn { background:#2f6d3f; color:#fff; } .print-btn:hover { background:#3f8a55; transform:scale(1.05); }
+    .reset-btn { background:#7d2f2f; color:#fff; } .reset-btn:hover { background:#a14444; transform:scale(1.05); }
+    .link-btn { background:#27568c; color:#fff; } .link-btn:hover { background:#2f6dad; transform:scale(1.05); }
+    .choice-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:16px; }
+    .choice-card { border:2px solid #b8a97f; border-radius:12px; background:#fffefb; padding:20px; text-align:center; }
+    .muted { color:#6d5b3f; font-style:italic; }
+    /* PRINT: only print the sheet */
+    @media print {
+      body { background:#fff; }
+      body * { visibility:hidden !important; height:0 !important; }
+      .sheet, .sheet * { visibility:visible !important; height:auto !important; }
+      .sheet { position:absolute; left:0; top:0; width:100%; margin:0; border:none; box-shadow:none; }
+    }
   </style>
 </head>
 <body>
 
-<h1>Age of Adventure – Character Creator</h1>
+<h1>Age of Adventure – Character Creator by Nylo</h1>
 
-<!-- Step 1 -->
-<div class="step active" id="step1">
+<!-- STEP 0: START CHOICE -->
+<div class="step" id="step0">
+  <h2>What would you like to do?</h2>
+  <div class="choice-grid">
+    <div class="choice-card">
+      <h3>Create Character</h3>
+      <p class="muted">Walk through the 8 steps, then export to PDF or copy for Discord.</p>
+      <button class="btn next-btn" onclick="goto(1)">Start Character Creator</button>
+    </div>
+    <div class="choice-card">
+      <h3>Look in the General Store</h3>
+      <p class="muted">Browse all items with prices and descriptions.</p>
+      <button class="btn link-btn" onclick="goto('store')">Open General Store</button>
+    </div>
+  </div>
+</div>
+
+<!-- GENERAL STORE -->
+<div class="step" id="storeStep" style="display:none;">
+  <h2>General Store</h2>
+  <p class="muted">Browse items. Use the Character Creator to actually buy & add gear.</p>
+
+  <h3>1 GP Items</h3>
+  <ul id="store1"></ul>
+
+  <h3>3 GP Items</h3>
+  <ul id="store3"></ul>
+
+  <h3>6 GP Items</h3>
+  <ul id="store6"></ul>
+
+  <p class="muted" id="storeFoot"></p>
+  <div>
+    <button class="btn next-btn" onclick="goto(1)">Go to Character Creator</button>
+    <button class="btn reset-btn" onclick="goto(0)">Back to Start</button>
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<div class="step" id="step1" style="display:none;">
   <h2>Step 1: Community & Role</h2>
   <label>Community:
-    <select id="community">
+    <select id="community" onchange="updateSheet()">
       <option value="">-- Select --</option>
       <option>Dwarf</option><option>Elf</option><option>Goblin</option>
       <option>Halfling</option><option>Human</option><option>Orc</option>
     </select>
   </label>
   <label>Role:
-    <select id="role">
+    <select id="role" onchange="updateSheet()">
       <option value="">-- Select --</option>
       <option>Archer</option><option>Barbarian</option><option>Cleric</option>
       <option>Rogue</option><option>Warrior</option><option>Wizard</option>
     </select>
   </label>
-  <button class="next-btn" onclick="nextStep(2)">Next</button>
+  <button class="btn next-btn" onclick="goto(2)">Next</button>
+  <button class="btn reset-btn" onclick="goto(0)">Back</button>
 </div>
 
-<!-- Step 2 -->
-<div class="step" id="step2">
+<!-- STEP 2 -->
+<div class="step" id="step2" style="display:none;">
   <h2>Step 2: Proficiency</h2>
-  <p>Choose a number 2–5:</p>
-  <input type="number" id="prof" min="2" max="5">
-  <button class="next-btn" onclick="nextStep(3)">Next</button>
+  <input type="number" id="prof" min="2" max="5" onchange="updateSheet()">
+  <button class="btn next-btn" onclick="goto(3)">Next</button>
+  <button class="btn reset-btn" onclick="goto(1)">Back</button>
 </div>
 
-<!-- Step 3 -->
-<div class="step" id="step3">
+<!-- STEP 3 -->
+<div class="step" id="step3" style="display:none;">
   <h2>Step 3: Name</h2>
-  <input type="text" id="name" placeholder="Hero Name">
-  <button class="next-btn" onclick="nextStep(4)">Next</button>
+  <input type="text" id="name" placeholder="Hero Name" oninput="updateSheet()">
+  <button class="btn next-btn" onclick="goto(4)">Next</button>
+  <button class="btn reset-btn" onclick="goto(2)">Back</button>
 </div>
 
-<!-- Step 4 -->
-<div class="step" id="step4">
+<!-- STEP 4 -->
+<div class="step" id="step4" style="display:none;">
   <h2>Step 4: Homeland</h2>
-  <input type="text" id="home" placeholder="Homeland">
-  <button class="next-btn" onclick="nextStep(5)">Next</button>
+  <input type="text" id="home" placeholder="Homeland" oninput="updateSheet()">
+  <button class="btn next-btn" onclick="goto(5)">Next</button>
+  <button class="btn reset-btn" onclick="goto(3)">Back</button>
 </div>
 
-<!-- Step 5 -->
-<div class="step" id="step5">
+<!-- STEP 5 -->
+<div class="step" id="step5" style="display:none;">
   <h2>Step 5: Goal</h2>
-  <input type="text" id="goal" placeholder="Hero Goal">
-  <button class="next-btn" onclick="nextStep(6)">Next</button>
+  <input type="text" id="goal" placeholder="Hero Goal" oninput="updateSheet()">
+  <button class="btn next-btn" onclick="goto(6)">Next</button>
+  <button class="btn reset-btn" onclick="goto(4)">Back</button>
 </div>
 
-<!-- Step 6 -->
-<div class="step" id="step6">
-  <h2>Step 6: Appearance</h2>
-  <textarea id="app" placeholder="Describe your hero..."></textarea>
-  <button class="next-btn" onclick="nextStep(7)">Next</button>
-</div>
-
-<!-- Step 7: Languages -->
-<div class="step" id="step7">
-  <h2>Languages</h2>
-  <p>All heroes know <strong>Common</strong>. Humans may add 2 extra. Tick as many as needed:</p>
-  <div id="languageList">
-    <label><input type="checkbox" value="Dwarvish"> Dwarvish</label><br>
-    <label><input type="checkbox" value="Elvish"> Elvish</label><br>
-    <label><input type="checkbox" value="Goblin Tongue"> Goblin Tongue</label><br>
-    <label><input type="checkbox" value="Halfling Speech"> Halfling Speech</label><br>
-    <label><input type="checkbox" value="Orcish"> Orcish</label><br>
-    <label><input type="checkbox" value="Other"> Other (specify)</label><br>
+<!-- STEP 6 -->
+<div class="step" id="step6" style="display:none;">
+  <h2>Step 6: Appearance & Image</h2>
+  <div class="avatar-wrap">
+    <img id="avatar" class="avatar" alt="Character image preview">
+    <div style="flex:1;">
+      <textarea id="app" placeholder="Describe your hero..." oninput="updateSheet()"></textarea>
+      <label class="avatar-note">Upload image (JPG/PNG/GIF):
+        <input type="file" id="imgInput" accept="image/*" onchange="loadImage(event)">
+      </label>
+      <div><button class="btn link-btn" onclick="downloadAvatar()">Download Image</button></div>
+    </div>
   </div>
-  <button class="next-btn" onclick="nextStep(8)">Next</button>
+  <button class="btn next-btn" onclick="goto(7)">Next</button>
+  <button class="btn reset-btn" onclick="goto(5)">Back</button>
 </div>
 
-<!-- Step 8: Equipment -->
-<div class="step" id="step8">
-  <h2>Equipment</h2>
-  <p><strong>Pouch:</strong> <span id="gold">-</span> GP | <span id="silver">-</span> SP</p>
-  <h3>1 GP Items</h3><div id="shop1"></div>
-  <h3>3 GP Items</h3><div id="shop3"></div>
-  <h3>6 GP Items</h3><div id="shop6"></div>
-  <button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+<!-- STEP 7 -->
+<div class="step" id="step7" style="display:none;">
+  <h2>Languages</h2>
+  <p>All heroes know <strong>Common</strong>. Non-humans also know their Community tongue.
+     Humans may choose <strong>two extra</strong> languages:</p>
+  <div id="languageChoice" style="display:none;">
+    <select id="extraLang" multiple size="6" onchange="updateSheet()">
+      <option value="Dwarvish">Dwarvish</option>
+      <option value="Elvish">Elvish</option>
+      <option value="Goblin Tongue">Goblin Tongue</option>
+      <option value="Halfling Speech">Halfling Speech</option>
+      <option value="Orcish">Orcish</option>
+      <option value="Other">Other</option>
+    </select>
+    <p><em>Hold CTRL (Windows) or CMD (Mac) to select two.</em></p>
+  </div>
+  <button class="btn next-btn" onclick="goto(8)">Next</button>
+  <button class="btn reset-btn" onclick="goto(6)">Back</button>
 </div>
 
-<!-- Character Sheet -->
-<div class="sheet">
+<!-- STEP 8 -->
+<div class="step" id="step8" style="display:none;">
+  <h2>Equipment & Output</h2>
+  <div class="tools-grid">
+    <div class="tool-card">
+      <h3>Buy Equipment</h3>
+      <p><strong>Pouch:</strong> <span id="gold">-</span> GP | <span id="silver">-</span> SP</p>
+      <h4>1 GP Items</h4><div id="shop1"></div>
+      <h4>3 GP Items</h4><div id="shop3"></div>
+      <h4>6 GP Items</h4><div id="shop6"></div>
+    </div>
+    <div class="tool-card">
+      <h3>Discord Style</h3>
+      <label>Divider
+        <select id="dsDivider">
+          <option value="dash" selected>──────── (light)</option>
+          <option value="double">════════ (double)</option>
+          <option value="heavy">━━━━━━━━ (heavy)</option>
+          <option value="equals">================================ (equals)</option>
+        </select>
+      </label><br>
+      <label>Heading Font
+        <select id="dsFont">
+          <option value="normal" selected>Normal</option>
+          <option value="bold">Bold (Unicode)</option>
+          <option value="smallcaps">Small Caps (Unicode)</option>
+        </select>
+      </label><br>
+      <label>Heading Color
+        <select id="dsColor">
+          <option value="none" selected>None</option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+          <option value="red">Red</option>
+          <option value="yellow">Yellow</option>
+          <option value="magenta">Magenta</option>
+          <option value="cyan">Cyan</option>
+          <option value="white">White</option>
+          <option value="gray">Gray</option>
+        </select>
+      </label><br>
+      <label>Headline Frame
+        <select id="dsFrame">
+          <option value="none" selected>None</option>
+          <option value="brackets">[ Title ]</option>
+          <option value="rounded">╭ Title ╮</option>
+          <option value="heavy">┏ Title ┓</option>
+          <option value="double">╔ Title ╗</option>
+        </select>
+      </label>
+      <hr class="hr">
+      <button class="btn print-btn" onclick="window.print()">Download PDF</button>
+      <button class="btn next-btn" onclick="copyDiscord()">Copy for Discord</button>
+      <button class="btn reset-btn" onclick="resetCreator()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHARACTER SHEET -->
+<div class="sheet" id="characterSheet">
   <h2>Character Sheet</h2>
-  <p><strong>Name:</strong> <span id="outName">-</span></p>
-  <p><strong>Homeland:</strong> <span id="outHome">-</span></p>
-  <p><strong>Community:</strong> <span id="outCommunity">-</span></p>
-  <p><strong>Role:</strong> <span id="outRole">-</span></p>
-  <p><strong>Goal:</strong> <span id="outGoal">-</span></p>
-  <p><strong>Appearance:</strong> <span id="outApp">-</span></p>
-  <hr>
-  <p><strong>Proficiency:</strong> <span id="outProf">-</span></p>
-  <p><strong>Stamina:</strong> <span id="outStamina">-</span></p>
-  <p><strong>Hero Points:</strong> <span id="outHero">-</span></p>
-  <p><strong>Languages:</strong> <span id="outLang">Common</span></p>
-  <p><strong>Skills:</strong></p><ul id="outSkills"></ul>
-  <div id="spellBlock"></div>
-  <p><strong>Equipment:</strong></p><ul id="outGear"></ul>
+
+  <div id="sec_identity" class="section">
+    <h4>Identity</h4>
+    <div class="hr"></div>
+    <div class="avatar-wrap" style="align-items:center;">
+      <img id="avatarSheet" class="avatar" alt="Character image" style="display:none;">
+      <div>
+        <p><strong>Name:</strong> <span id="outName">-</span></p>
+        <p><strong>Homeland:</strong> <span id="outHome">-</span></p>
+        <p><strong>Community:</strong> <span id="outCommunity">-</span></p>
+        <p><strong>Role:</strong> <span id="outRole">-</span></p>
+        <p><strong>Goal:</strong> <span id="outGoal">-</span></p>
+        <p><strong>Appearance:</strong> <span id="outApp">-</span></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec_stats" class="section">
+    <h4>Stats</h4>
+    <div class="hr"></div>
+    <p><strong>Proficiency:</strong> <span id="outProf">-</span></p>
+    <p><strong>Stamina:</strong> <span id="outStamina">-</span></p>
+    <p><strong>Hero Points:</strong> <span id="outHero">-</span></p>
+    <p><strong>Carry Capacity:</strong> <span id="outCarry">-</span></p>
+  </div>
+
+  <div id="sec_languages" class="section">
+    <h4>Languages</h4>
+    <div class="hr"></div>
+    <p><strong>Languages:</strong> <span id="outLang">Common</span></p>
+  </div>
+
+  <div id="sec_skills" class="section">
+    <h4>Skills</h4>
+    <div class="hr"></div>
+    <ul id="outSkills"></ul>
+  </div>
+
+  <div id="sec_spells" class="section">
+    <h4>Spells</h4>
+    <div class="hr"></div>
+    <div id="spellBlock"></div>
+  </div>
+
+  <div id="sec_equipment" class="section">
+    <h4>Equipment</h4>
+    <div class="hr"></div>
+    <ul id="outGear"></ul>
+  </div>
 </div>
 
 <script>
+/* ===== Utilities & State ===== */
 function rollDice(s){ return Math.floor(Math.random()*s)+1; }
-let gp=12+rollDice(6), sp=rollDice(6), gear=["Clothing","Backpack"];
+let gp, sp, gear;
+let avatarDataURL = "", avatarFilename = "";
 
+/* ===== Navigation ===== */
+function goto(where){
+  // Hide all
+  document.querySelectorAll('.step').forEach(s=>s.style.display='none');
+  // Route
+  if(where===0){ document.getElementById('step0').style.display='block'; return; }
+  if(where==='store'){ document.getElementById('storeStep').style.display='block'; return; }
+  const stepEl = document.getElementById('step'+where);
+  if(stepEl) stepEl.style.display='block';
+  updateSheet();
+}
+
+/* ===== Data: Skills, Spells, Shop, Store Catalog ===== */
 const skills = {
   Dwarf:["Detect","Teamwork"], Elf:["Acrobatics","Pathfinder"], Goblin:["Darksee","Underground"],
   Halfling:["Hide","Willpower"], Human:["Parley","Languages (+2)"], Orc:["Athletics","Resilience"],
@@ -132,16 +313,71 @@ const skills = {
   Wizard:["Arcana"]
 };
 
-const spellsArcane=["Darksee","Levitate","Missile","Protection","Speak","Teleport"];
-const spellsHoly=["Bless","Divine","Heal","Light","Smite","Ward"];
+const spellsArcane={
+  "Darksee":"Self, see in greyscale for +1D R, Far",
+  "Levitate":"Self, +1R, 1 vertical Near Move per Round",
+  "Missile":"Far, bolt of energy, 1 DMG",
+  "Protection":"Self, -1 DMG from 1 Attack per Round (Free Action; no Spell Drain)",
+  "Speak":"Self, communicate with any sentient being for +1D R",
+  "Teleport":"Self, to 1 previously visited spot, Far"
+};
+const spellsHoly={
+  "Bless":"Touch, +1D to 1 Proficiency Check next Round",
+  "Divine":"Touch, reveal beyond or within 1 structure, Near",
+  "Heal":"Touch, restore 1 Stamina point",
+  "Light":"Touch, as if day, for +1D R, Near",
+  "Smite":"Touch, Holy Weapon +1 DMG (Free Action; no Spell Drain)",
+  "Ward":"Far, prevent 1 Target’s 1 Move into your Melee area within +1D R"
+};
 
 const shop={
   gp1:["Acid","Caltrops","Candles (6)","Fire Pot","Grappling Hook","Oil (6)","Pitons (6)","Provisions (6)","Rope","Small Mirror","Tinderbox","Torches (6)"],
   gp3:["Animal Companion (Small)","Armor","Heavy Armor","Arrows (6)","Cart","Lantern","Net","Bolas","Shield","Heavy Shield","Spyglass","Throwing Blades (6)","Tinker Tools","Specialist Tools","Weapon (1H/2H)","Silver Weapon"],
   gp6:["Healing Kit/Herbs (6)","Hireling","Holy Water","Magic Recharge +1","Poison","Potion","Scroll","Spellcasting Item"]
 };
+/* Informational catalog for General Store (from your text) */
+const storeCatalog = {
+  gp1: [
+    ["Acid","1 DMG or dissolves 1# Item e.g. Armor or a lock"],
+    ["Caltrops","For Target to traverse = halves Move or 1 DMG"],
+    ["Candles (6)","1-use each; lights a Melee Area, or Near in Lantern; 1 unit burns for 1 hour"],
+    ["Fire Pot","1 Action to light wick; 1 Fire DMG on impact; see ‘Catch Fire’ under ‘Equipment’ on page 7"],
+    ["Grappling Hook","—"],
+    ["Oil (6)","1-use each; 1 unit burns for 1 hour"],
+    ["Pitons (6)","Requires a Hammer or similar Item to secure"],
+    ["Provisions (6)","1 Provision (food & water) required per day (2 for Large creatures)"],
+    ["Rope","Far length"],
+    ["Small Mirror","Also included in a 3 GP Make-up Kit"],
+    ["Tinderbox","—"],
+    ["Torches (6)","1-use each; lights a Near Area; 1 unit burns for 1 hour"]
+  ],
+  gp3: [
+    ["Animal Companion*","3 GP Small 1# e.g. rat, carry 1#, pull 2#, Stamina 1; 6 GP Medium 6# e.g. dog, carry 3#, pull 6#, Stamina 2; 12 GP Large 4P e.g. horse, carry 1P, pull 2P, Stamina 3"],
+    ["Armor","(+1 Stamina; ½ Move to Climb & Swim); or Armor, Heavy (additional 1 Stamina; -1D Dodge)"],
+    ["Arrows (6)","Retrieve for re-use is 3/6 chance"],
+    ["Cart","Per 6# load capacity; -1D to pull"],
+    ["Lantern","Lights a Near Area if fully open, or Far Point if beam focused; can also be fully shuttered"],
+    ["Net / Bolas","Net: 2H Throw; Medium Target suffers -1D, requires 1 Action to free; or Bolas for 1H Throw"],
+    ["Shield / Heavy Shield","Shield (1H); or Heavy Shield (use once per Round to Block and negate all DMG if successful)"],
+    ["Spyglass","—"],
+    ["Throwing Blades (6)","Near; retrieve for re-use is 3/6 chance"],
+    ["Tinker Tools / Specialist Tools","Tinker Tools include lock picks; Specialist Tools: nominate profession/purpose e.g. Hunting"],
+    ["Weapon / Silver Weapon","Weapon (specify 1H or 2H); Silver Weapon x2 cost (+1 DMG if Vulnerable; Breaks 1/6 per use)"]
+  ],
+  gp6: [
+    ["Healing Kit or Healing Herbs (6)","Standard MIND Check = -1 DMG; Fail still uses 1 unit"],
+    ["Hireling*","Cost is per Adventure; Hero equips; carry 6#; pull 6# per 1H at -1D; starts with 1 Community Skill & 1 Role Skill; Stamina 2; max 1 Spell, if applicable"],
+    ["Holy Water","2 DMG versus Evil"],
+    ["Magic Recharge +1","Recharges Artefacts"],
+    ["Poison","Standard Check using MIGHT or Size (whichever is higher). Fail = 1 DMG, and -1D for +1D R"],
+    ["Potion","Self or Touch; automatic 2 Successes. 1-use."],
+    ["Scroll","Up to Far Target; hold open, speak & Standard MIND Check = 2 Successes and Scroll expended; no Spell Drain. Failing to activate does not expend the Magic"],
+    ["Spellcasting Item or Weapon","Unique to caster; 1H or 2H. Casting is at -1D without this"]
+  ],
+  foot: "* Hirelings & Animal Companions: a Hero can command a combined maximum number equal to 6 minus their Proficiency. The GM plays the Hireling or Companion, but for Actions/Reactions the player rolls 1D (+/- any Bonuses/Penalties). Each 1 is 1 Success (a Spellcaster only has 1 Spell, but no Spell Drain)."
+};
 
-// Notes for items
+/* ===== Item notes for sheet display ===== */
 const itemNotes = {
   "Armor":"+1 Stamina; half Move when climbing/swimming",
   "Heavy Armor":"+1 extra Stamina; -1D Dodge",
@@ -155,12 +391,19 @@ const itemNotes = {
   "Hireling":"Stamina 2; carries 6#; 1 Community + 1 Role skill"
 };
 
-function nextStep(n){
-  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
-  document.getElementById('step'+n).classList.add('active');
-  updateSheet();
+/* ===== General Store rendering ===== */
+function renderStore(){
+  const ul1 = document.getElementById('store1');
+  const ul3 = document.getElementById('store3');
+  const ul6 = document.getElementById('store6');
+  const makeLis = arr => arr.map(([name, desc]) => `<li><strong>${name}</strong>${desc && desc!=='—' ? ` — ${desc}` : ''}</li>`).join("");
+  ul1.innerHTML = makeLis(storeCatalog.gp1);
+  ul3.innerHTML = makeLis(storeCatalog.gp3);
+  ul6.innerHTML = makeLis(storeCatalog.gp6);
+  document.getElementById('storeFoot').innerText = storeCatalog.foot;
 }
 
+/* ===== Shop (buy buttons) ===== */
 function initShop(){
   makeShop("shop1",shop.gp1,1);
   makeShop("shop3",shop.gp3,3);
@@ -173,47 +416,74 @@ function makeShop(divID,list,cost){
   });
   document.getElementById(divID).innerHTML=html;
 }
-
 function buyItem(name,cost){
-  if(gp>=cost){
+  if(gp>=cost){ gp-=cost; gear.push(formatItem(name)); updateSheet(); }
+  else if(confirm(`Not enough GP (${gp} left). Buy ${name} anyway and go into debt?`)){
     gp-=cost; gear.push(formatItem(name)); updateSheet();
-  } else {
-    if(confirm(`Not enough GP (${gp} left). Buy ${name} anyway and go into debt?`)){
-      gp-=cost; gear.push(formatItem(name)); updateSheet();
-    }
   }
 }
+function formatItem(name){ return itemNotes[name] ? `${name} (${itemNotes[name]})` : name; }
 
-function formatItem(name){
-  return itemNotes[name] ? `${name} (${itemNotes[name]})` : name;
+/* ===== Image handling ===== */
+function loadImage(evt){
+  const file = evt.target.files?.[0];
+  if(!file){ avatarDataURL=""; avatarFilename=""; updateSheet(); return; }
+  avatarFilename = file.name || "portrait.png";
+  const reader = new FileReader();
+  reader.onload = e => { avatarDataURL = e.target.result; document.getElementById("avatar").src = avatarDataURL; updateSheet(); };
+  reader.readAsDataURL(file);
+}
+function downloadAvatar(){
+  if(!avatarDataURL){ alert("No image uploaded yet."); return; }
+  const a = document.createElement("a");
+  const safeName = (document.getElementById("outName").innerText || "character").trim().replace(/[^a-z0-9_\-]+/gi,"_") || "character";
+  const ext = (avatarFilename.split(".").pop() || "png").toLowerCase();
+  a.href = avatarDataURL; a.download = `${safeName}_portrait.${ext}`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
+/* ===== Sheet update ===== */
 function updateSheet(){
-  let name=document.getElementById("name")?.value||"-";
-  let home=document.getElementById("home")?.value||"-";
-  let goal=document.getElementById("goal")?.value||"-";
-  let app=document.getElementById("app")?.value||"-";
-  let comm=document.getElementById("community")?.value||"-";
-  let role=document.getElementById("role")?.value||"-";
-  let prof=parseInt(document.getElementById("prof")?.value)||"-";
-  let stamina=(prof!="-")?prof:"-";
-  let hero=(prof!="-")?rollDice(6):"-";
+  const name=document.getElementById("name")?.value||"-";
+  const home=document.getElementById("home")?.value||"-";
+  const goal=document.getElementById("goal")?.value||"-";
+  const app=document.getElementById("app")?.value||"-";
+  const comm=document.getElementById("community")?.value||"-";
+  const role=document.getElementById("role")?.value||"-";
+  const prof=parseInt(document.getElementById("prof")?.value)||"-";
+  const stamina=(prof!="-")?prof:"-";
+  const hero=(prof!="-")?rollDice(6):"-";
 
   // Languages
   let langs=["Common"];
-  if(comm==="Human") langs.push("2 extra");
-  document.querySelectorAll("#languageList input:checked").forEach(cb=>langs.push(cb.value));
+  const langBox = document.getElementById("languageChoice");
+  if(comm && comm !== "Human"){ langs.push(comm+" tongue"); if(langBox) langBox.style.display="none"; }
+  else if(comm==="Human"){
+    if(langBox) langBox.style.display="block";
+    let extras=[...document.getElementById("extraLang")?.selectedOptions].map(o=>o.value);
+    if(extras.length>2) extras = extras.slice(0,2);
+    langs=langs.concat(extras);
+  } else { if(langBox) langBox.style.display="none"; }
 
   // Skills
-  let skillList=(skills[comm]||[]).concat(skills[role]||[]).map(s=>`<li>${s}</li>`).join("");
+  const skillList=(skills[comm]||[]).concat(skills[role]||[]).map(s=>`<li>${s}</li>`).join("");
 
   // Spells
-  let spellBlock=document.getElementById("spellBlock");
-  if(role==="Wizard") spellBlock.innerHTML="<p><strong>Arcane Spells:</strong></p><ul>"+spellsArcane.map(s=>"<li>"+s+"</li>").join("")+"</ul>";
-  else if(role==="Cleric") spellBlock.innerHTML="<p><strong>Holy Spells:</strong></p><ul>"+spellsHoly.map(s=>"<li>"+s+"</li>").join("")+"</ul>";
-  else spellBlock.innerHTML="";
+  const spellBlock=document.getElementById("spellBlock");
+  if(role==="Wizard"){
+    let html="<ul>"; for(let s in spellsArcane){ html+=`<li>${s}: ${spellsArcane[s]}</li>`; } html+="</ul>";
+    spellBlock.innerHTML=html;
+  } else if(role==="Cleric"){
+    let html="<ul>"; for(let s in spellsHoly){ html+=`<li>${s}: ${spellsHoly[s]}</li>`; } html+="</ul>";
+    spellBlock.innerHTML=html;
+  } else { spellBlock.innerHTML="<p>—</p>"; }
 
-  // Output
+  // Carry Capacity
+  const carryCap = (prof !== "-") ? (prof + 6) : "-";
+  const carryMax = (prof !== "-") ? (prof + 9) : "-";
+  document.getElementById("outCarry").innerText = carryCap + " (max " + carryMax + ")";
+
+  // Output to sheet
   document.getElementById("outName").innerText=name;
   document.getElementById("outHome").innerText=home;
   document.getElementById("outGoal").innerText=goal;
@@ -224,15 +494,142 @@ function updateSheet(){
   document.getElementById("outStamina").innerText=stamina;
   document.getElementById("outHero").innerText=hero;
   document.getElementById("outLang").innerText=langs.join(", ");
-  document.getElementById("outSkills").innerHTML=skillList;
-  document.getElementById("outGear").innerHTML=gear.map(g=>`<li>${g}</li>`).join("");
+  document.getElementById("outSkills").innerHTML=skillList || "<li>—</li>";
+  document.getElementById("outGear").innerHTML=(gear||[]).map(g=>`<li>${g}</li>`).join("") || "<li>—</li>";
   document.getElementById("gold").innerText=gp;
   document.getElementById("silver").innerText=sp;
+
+  // Image on sheet
+  const avatarSheet = document.getElementById("avatarSheet");
+  if(avatarDataURL){ avatarSheet.src = avatarDataURL; avatarSheet.style.display = "block"; }
+  else { avatarSheet.removeAttribute("src"); avatarSheet.style.display = "none"; }
 }
 
-initShop();
-updateSheet();
+/* ===== Reset ===== */
+function resetCreator(){
+  gp=12+rollDice(6);
+  sp=rollDice(6);
+  gear=["Clothing","Backpack"];
+  avatarDataURL=""; avatarFilename="";
+  const avatar = document.getElementById("avatar"); if(avatar) avatar.removeAttribute("src");
+  const imgInput = document.getElementById("imgInput"); if(imgInput) imgInput.value="";
+  document.querySelectorAll("input, textarea, select").forEach(el=>{
+    if(el.id==="imgInput") return;
+    if(el.multiple) el.selectedIndex=-1; else el.value="";
+  });
+  // Discord style defaults
+  const dd = id => document.getElementById(id);
+  if(dd("dsDivider")) dd("dsDivider").value="dash";
+  if(dd("dsFont"))    dd("dsFont").value="normal";
+  if(dd("dsColor"))   dd("dsColor").value="none";
+  if(dd("dsFrame"))   dd("dsFrame").value="none";
+  goto(0);
+}
+
+/* ===== Copy for Discord (no counters, fallback-first) ===== */
+async function copyText(text){
+  try{
+    const ta=document.createElement("textarea");
+    ta.value=text; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.top="-1000px";
+    document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
+    const ok=document.execCommand("copy"); document.body.removeChild(ta);
+    if(navigator.clipboard && window.isSecureContext){ try{ await navigator.clipboard.writeText(text); }catch(e){} }
+    alert(ok ? "Copied to clipboard!" : "Tried to copy—if it didn’t work, press Ctrl/Cmd+C.");
+    return ok;
+  }catch(e){ console.error(e); alert("Copy failed—press Ctrl/Cmd+C."); return false; }
+}
+
+/* Font & color helpers for Discord */
+function toBold(s){ return s
+  .replace(/[A-Z]/g,c=>String.fromCodePoint(c.charCodeAt(0)-0x41+0x1D400))
+  .replace(/[a-z]/g,c=>String.fromCodePoint(c.charCodeAt(0)-0x61+0x1D41A))
+  .replace(/[0-9]/g,d=>String.fromCodePoint(d.charCodeAt(0)-0x30+0x1D7CE)); }
+const smallCapsMap={a:"ᴀ",b:"ʙ",c:"ᴄ",d:"ᴅ",e:"ᴇ",f:"ꜰ",g:"ɢ",h:"ʜ",i:"ɪ",j:"ᴊ",k:"ᴋ",l:"ʟ",m:"ᴍ",n:"ɴ",o:"ᴏ",p:"ᴘ",q:"ǫ",r:"ʀ",s:"s",t:"ᴛ",u:"ᴜ",v:"ᴠ",w:"ᴡ",x:"x",y:"ʏ",z:"ᴢ"};
+function toSmallCaps(s){ return s.split("").map(ch=>smallCapsMap[ch.toLowerCase()]||ch).join(""); }
+function fontify(s,mode){ if(mode==="bold") return toBold(s); if(mode==="smallcaps") return toSmallCaps(s); return s; }
+const ANSI={reset:"\u001b[0m", fg:{none:"",green:"\u001b[32m",blue:"\u001b[34m",red:"\u001b[31m",yellow:"\u001b[33m",magenta:"\u001b[35m",cyan:"\u001b[36m",white:"\u001b[37m",gray:"\u001b[90m"}};
+function colorize(s,c){ return c==="none" ? s : ANSI.fg[c] + s + ANSI.reset; }
+function makeDivider(kind){ const w=40; if(kind==="double") return "═".repeat(w); if(kind==="heavy") return "━".repeat(w); if(kind==="equals") return "=".repeat(w); return "─".repeat(w); }
+function frameTitle(txt,frame){ if(frame==="none") return txt; if(frame==="brackets") return `[ ${txt} ]`; if(frame==="rounded") return `╭ ${txt} ╮`; if(frame==="heavy") return `┏ ${txt} ┓`; if(frame==="double") return `╔ ${txt} ╗`; return txt; }
+
+/* Build Discord text (sections always present) */
+function buildDiscordBlock(){
+  const DIV = (document.getElementById("dsDivider")||{}).value || "dash";
+  const FONT = (document.getElementById("dsFont")||{}).value || "normal";
+  const COLOR= (document.getElementById("dsColor")||{}).value || "none";
+  const FRAME= (document.getElementById("dsFrame")||{}).value || "none";
+  const divider = makeDivider(DIV);
+  const hdr = t => colorize(fontify(frameTitle(t, FRAME), FONT), COLOR);
+
+  const get = id => (document.getElementById(id)?.innerText || "-").toString();
+  const list = sel => Array.from(document.querySelectorAll(sel)).map(li => li.innerText);
+  const linesOf = txt => (txt||"").trim() ? txt.trim().split("\n") : [];
+
+  const d = {
+    name:get("outName"), comm:get("outCommunity"), role:get("outRole"),
+    home:get("outHome"), goal:get("outGoal"), app:get("outApp"),
+    prof:get("outProf"), stam:get("outStamina"), hero:get("outHero"),
+    carry:get("outCarry"), langs:get("outLang"),
+    skills:list("#outSkills li"),
+    spells:linesOf(document.getElementById("spellBlock").innerText.replace(/^Arcane Spells:|^Holy Spells:/gi,"")),
+    gear:list("#outGear li")
+  };
+
+  const out=[];
+  out.push(hdr("AGE OF ADVENTURE — CHARACTER SHEET"));
+  out.push(divider);
+
+  out.push(hdr("IDENTITY"));
+  out.push(`Name: ${d.name}`);
+  out.push(`Community: ${d.comm}`);
+  out.push(`Role: ${d.role}`);
+  out.push(`Homeland: ${d.home}`);
+  if(d.goal && d.goal!=="-") out.push(`Goal: ${d.goal}`);
+  if(d.app  && d.app !=="-") out.push(`Appearance: ${d.app}`);
+  if(avatarDataURL){
+    const safe=(d.name||"character").trim().replace(/[^a-z0-9_\-]+/gi,"_")||"character";
+    const ext=(avatarFilename.split(".").pop()||"png").toLowerCase();
+    out.push(`Image: ${safe}_portrait.${ext} (attach this file when posting)`);
+  }
+  out.push(divider);
+
+  out.push(hdr("STATS"));
+  out.push(`Proficiency: ${d.prof}`);
+  out.push(`Stamina: ${d.stam}`);
+  out.push(`Hero Points: ${d.hero}`);
+  out.push(`Carry Capacity: ${d.carry}`);
+  out.push(divider);
+
+  out.push(hdr("LANGUAGES"));
+  out.push(`Languages: ${d.langs}`);
+  out.push(divider);
+
+  out.push(hdr("SKILLS"));
+  if(d.skills.length) d.skills.forEach(s=>out.push(`• ${s}`)); else out.push("—");
+  out.push(divider);
+
+  out.push(hdr("SPELLS"));
+  if(d.spells.length && !(d.spells.length===1 && d.spells[0]==="—")) d.spells.forEach(s=>out.push(s)); else out.push("—");
+  out.push(divider);
+
+  out.push(hdr("EQUIPMENT"));
+  if(d.gear.length) d.gear.forEach(g=>out.push(`• ${g}`)); else out.push("—");
+
+  const needsAnsi = COLOR!=="none";
+  return (needsAnsi ? "```ansi\n" : "```\n") + out.join("\n") + "\n```";
+}
+async function copyDiscord(){ const block = buildDiscordBlock(); await copyText(block); }
+
+/* ===== Init ===== */
+function init(){
+  renderStore();
+  initShop();
+  resetCreator(); // also jumps to start
+}
+init();
 </script>
 
 </body>
 </html>
+
+  
