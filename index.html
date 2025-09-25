@@ -181,9 +181,17 @@
     <div class="tool-card">
       <h3>Buy Equipment</h3>
       <p><strong>Pouch:</strong> <span id="gold">-</span> GP | <span id="silver">-</span> SP</p>
-      <label>Other pouch notes (e.g., gems, IOUs)
-        <input id="pouchOtherInput" type="text" placeholder="Optional" oninput="updateSheet()">
-      </label>
+
+      <!-- UPDATED: Other placement selector -->
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0;">
+        <label style="flex:1 1 260px;">Other (eg gems; personal or mundane items)
+          <input id="pouchOtherInput" type="text" placeholder="e.g., small ruby; journal; pipe">
+        </label>
+        <label><input type="radio" name="otherDest" value="pouch" checked> To Pouch</label>
+        <label><input type="radio" name="otherDest" value="equipment"> To Equipment</label>
+        <button class="btn link-btn" onclick="addOther()">Add</button>
+      </div>
+
       <h4>1 GP Items</h4><div id="shop1"></div>
       <h4>3 GP Items</h4><div id="shop3"></div>
       <h4>6 GP Items</h4><div id="shop6"></div>
@@ -282,7 +290,7 @@
     <div id="spellBlock"><p>—</p></div>
   </div>
 
-  <!-- POUCH now right before Equipment -->
+  <!-- POUCH right before Equipment -->
   <div id="sec_pouch" class="section">
     <h4>Pouch</h4>
     <div class="hr"></div>
@@ -303,12 +311,11 @@
 function rollDice(s){ return Math.floor(Math.random()*s)+1; }
 let gp, sp, gear;
 let avatarDataURL = "", avatarFilename = "";
+let pouchOthers = []; // NEW: holds “Other” items that are kept in the Pouch
 
 /* ===== Navigation ===== */
 function goto(where){
-  // Hide all
   document.querySelectorAll('.step').forEach(s=>s.style.display='none');
-  // Route
   if(where===0){ document.getElementById('step0').style.display='block'; return; }
   if(where==='store'){ document.getElementById('storeStep').style.display='block'; return; }
   const stepEl = document.getElementById('step'+where);
@@ -434,6 +441,13 @@ function buyItem(name,cost){
 }
 function formatItem(name){ return itemNotes[name] ? `${name} (${itemNotes[name]})` : name; }
 
+/* ===== Numbered gear lines (0# base + purchased items) ===== */
+function getNumberedGearLines(){
+  const base0 = `0#: Adventurer's Clothing; Backpack; Coin Pouch (${sp} SP)`;
+  const rest = (gear || []).filter(it => it !== "Clothing" && it !== "Backpack");
+  return [ base0, ...rest.map((it, idx) => `${idx + 1}#: ${it}`) ];
+}
+
 /* ===== Image handling ===== */
 function loadImage(evt){
   const file = evt.target.files?.[0];
@@ -450,6 +464,21 @@ function downloadAvatar(){
   const ext = (avatarFilename.split(".").pop() || "png").toLowerCase();
   a.href = avatarDataURL; a.download = `${safeName}_portrait.${ext}`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+/* ===== Add “Other” logic (Pouch vs Equipment) ===== */
+function addOther(){
+  const input = document.getElementById('pouchOtherInput');
+  const raw = (input?.value || "").trim();
+  if(!raw){ alert("Type something to add."); return; }
+  const dest = (document.querySelector('input[name="otherDest"]:checked')||{}).value || "pouch";
+  if(dest === "equipment"){
+    gear.push(raw);
+  } else {
+    pouchOthers.push(raw);
+  }
+  input.value = "";
+  updateSheet();
 }
 
 /* ===== Sheet update ===== */
@@ -488,12 +517,9 @@ function updateSheet(){
     spellBlock.innerHTML=html;
   } else { spellBlock.innerHTML="<p>—</p>"; }
 
-  // Carry Capacity = Proficiency + 6 (only)
+  // Carry Capacity = Proficiency + 6
   const carryCap = (prof !== "-") ? (prof + 6) : "-";
   document.getElementById("outCarry").innerText = carryCap;
-
-  // Pouch "Other"
-  const otherText = document.getElementById("pouchOtherInput")?.value?.trim() || "—";
 
   // Output to sheet
   document.getElementById("outName").innerText=name;
@@ -507,12 +533,17 @@ function updateSheet(){
   document.getElementById("outHero").innerText=hero;
   document.getElementById("outLang").innerText=langs.join(", ");
   document.getElementById("outSkills").innerHTML=skillList || "<li>—</li>";
-  document.getElementById("outGear").innerHTML=(gear||[]).map(g=>`<li>${g}</li>`).join("") || "<li>—</li>";
+
+  // Numbered equipment list on the sheet
+  const numberedGear = getNumberedGearLines();
+  document.getElementById("outGear").innerHTML = numberedGear.map(l => `<li>${l}</li>`).join("");
+
+  // Pouch values (sheet + buy area)
   document.getElementById("gold").innerText=gp;
   document.getElementById("silver").innerText=sp;
   document.getElementById("outGold").innerText=gp;
   document.getElementById("outSilver").innerText=sp;
-  document.getElementById("outOther").innerText=otherText;
+  document.getElementById("outOther").innerText=(pouchOthers.length ? pouchOthers.join("; ") : "—");
 
   // Image on sheet
   const avatarSheet = document.getElementById("avatarSheet");
@@ -525,15 +556,20 @@ function resetCreator(){
   gp=12+rollDice(6);
   sp=rollDice(6);
   gear=["Clothing","Backpack"];
+  pouchOthers = []; // clear “Other” pouch entries
+  const r = document.querySelector('input[name="otherDest"][value="pouch"]');
+  if (r) r.checked = true;
+
   avatarDataURL=""; avatarFilename="";
   const avatar = document.getElementById("avatar"); if(avatar) avatar.removeAttribute("src");
   const imgInput = document.getElementById("imgInput"); if(imgInput) imgInput.value="";
-  document.getElementById("pouchOtherInput").value="";
+  const otherInput = document.getElementById("pouchOtherInput"); if(otherInput) otherInput.value="";
+
   document.querySelectorAll("input, textarea, select").forEach(el=>{
     if(el.id==="imgInput" || el.id==="pouchOtherInput") return;
-    if(el.multiple) el.selectedIndex=-1; else el.value="";
+    if(el.type==="radio" && el.name==="otherDest") return;
+    if(el.multiple) el.selectedIndex=-1; else if(el.type!=="file") el.value="";
   });
-  // Discord style defaults
   const dd = id => document.getElementById(id);
   if(dd("dsDivider")) dd("dsDivider").value="dash";
   if(dd("dsFont"))    dd("dsFont").value="normal";
@@ -568,7 +604,7 @@ function colorize(s,c){ return c==="none" ? s : ANSI.fg[c] + s + ANSI.reset; }
 function makeDivider(kind){ const w=40; if(kind==="double") return "═".repeat(w); if(kind==="heavy") return "━".repeat(w); if(kind==="equals") return "=".repeat(w); return "─".repeat(w); }
 function frameTitle(txt,frame){ if(frame==="none") return txt; if(frame==="brackets") return `[ ${txt} ]`; if(frame==="rounded") return `╭ ${txt} ╮`; if(frame==="heavy") return `┏ ${txt} ┓`; if(frame==="double") return `╔ ${txt} ╗`; return txt; }
 
-/* Build Discord text (sections always present; POUCH before EQUIPMENT) */
+/* Build Discord text (sections always present; POUCH before EQUIPMENT; numbered gear) */
 function buildDiscordBlock(){
   const DIV = (document.getElementById("dsDivider")||{}).value || "dash";
   const FONT = (document.getElementById("dsFont")||{}).value || "normal";
@@ -578,7 +614,6 @@ function buildDiscordBlock(){
   const hdr = t => colorize(fontify(frameTitle(t, FRAME), FONT), COLOR);
 
   const get = id => (document.getElementById(id)?.innerText || "-").toString();
-  const list = sel => Array.from(document.querySelectorAll(sel)).map(li => li.innerText);
   const linesOf = txt => (txt||"").trim() ? txt.trim().split("\n") : [];
 
   const d = {
@@ -586,9 +621,7 @@ function buildDiscordBlock(){
     home:get("outHome"), goal:get("outGoal"), app:get("outApp"),
     prof:get("outProf"), stam:get("outStamina"), hero:get("outHero"),
     carry:get("outCarry"), langs:get("outLang"),
-    skills:list("#outSkills li"),
     spells:linesOf(document.getElementById("spellBlock").innerText.replace(/^Arcane Spells:|^Holy Spells:/gi,"")),
-    gear:list("#outGear li"),
     gold:get("outGold"), silver:get("outSilver"), other:get("outOther")
   };
 
@@ -622,14 +655,14 @@ function buildDiscordBlock(){
   out.push(divider);
 
   out.push(hdr("SKILLS"));
-  if(d.skills.length) d.skills.forEach(s=>out.push(`• ${s}`)); else out.push("—");
+  const skillsLis = Array.from(document.querySelectorAll("#outSkills li")).map(li => li.innerText);
+  if(skillsLis.length) skillsLis.forEach(s=>out.push(`• ${s}`)); else out.push("—");
   out.push(divider);
 
   out.push(hdr("SPELLS"));
   if(d.spells.length && !(d.spells.length===1 && d.spells[0]==="—")) d.spells.forEach(s=>out.push(s)); else out.push("—");
   out.push(divider);
 
-  // POUCH right before EQUIPMENT
   out.push(hdr("POUCH"));
   out.push(`Gold: ${d.gold} GP`);
   out.push(`Silver: ${d.silver} SP`);
@@ -637,7 +670,8 @@ function buildDiscordBlock(){
   out.push(divider);
 
   out.push(hdr("EQUIPMENT"));
-  if(d.gear.length) d.gear.forEach(g=>out.push(`• ${g}`)); else out.push("—");
+  const gearLines = getNumberedGearLines();
+  gearLines.forEach(l => out.push(l));
 
   const needsAnsi = COLOR!=="none";
   return (needsAnsi ? "```ansi\n" : "```\n") + out.join("\n") + "\n```";
@@ -648,13 +682,14 @@ async function copyDiscord(){ const block = buildDiscordBlock(); await copyText(
 function init(){
   renderStore();
   initShop();
-  resetCreator(); // also jumps to start
+  resetCreator();
 }
 init();
 </script>
 
 </body>
 </html>
+
 
 
   
