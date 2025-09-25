@@ -181,6 +181,9 @@
     <div class="tool-card">
       <h3>Buy Equipment</h3>
       <p><strong>Pouch:</strong> <span id="gold">-</span> GP | <span id="silver">-</span> SP</p>
+      <label>Other pouch notes (e.g., gems, IOUs)
+        <input id="pouchOtherInput" type="text" placeholder="Optional" oninput="updateSheet()">
+      </label>
       <h4>1 GP Items</h4><div id="shop1"></div>
       <h4>3 GP Items</h4><div id="shop3"></div>
       <h4>6 GP Items</h4><div id="shop6"></div>
@@ -276,7 +279,16 @@
   <div id="sec_spells" class="section">
     <h4>Spells</h4>
     <div class="hr"></div>
-    <div id="spellBlock"></div>
+    <div id="spellBlock"><p>—</p></div>
+  </div>
+
+  <!-- POUCH now right before Equipment -->
+  <div id="sec_pouch" class="section">
+    <h4>Pouch</h4>
+    <div class="hr"></div>
+    <p><strong>Gold:</strong> <span id="outGold">-</span> GP</p>
+    <p><strong>Silver:</strong> <span id="outSilver">-</span> SP</p>
+    <p><strong>Other:</strong> <span id="outOther">—</span></p>
   </div>
 
   <div id="sec_equipment" class="section">
@@ -335,46 +347,46 @@ const shop={
   gp3:["Animal Companion (Small)","Armor","Heavy Armor","Arrows (6)","Cart","Lantern","Net","Bolas","Shield","Heavy Shield","Spyglass","Throwing Blades (6)","Tinker Tools","Specialist Tools","Weapon (1H/2H)","Silver Weapon"],
   gp6:["Healing Kit/Herbs (6)","Hireling","Holy Water","Magic Recharge +1","Poison","Potion","Scroll","Spellcasting Item"]
 };
-/* Informational catalog for General Store (from your text) */
+/* Informational catalog for General Store */
 const storeCatalog = {
   gp1: [
     ["Acid","1 DMG or dissolves 1# Item e.g. Armor or a lock"],
     ["Caltrops","For Target to traverse = halves Move or 1 DMG"],
     ["Candles (6)","1-use each; lights a Melee Area, or Near in Lantern; 1 unit burns for 1 hour"],
-    ["Fire Pot","1 Action to light wick; 1 Fire DMG on impact; see ‘Catch Fire’ under ‘Equipment’ on page 7"],
+    ["Fire Pot","1 Action to light wick; 1 Fire DMG on impact"],
     ["Grappling Hook","—"],
     ["Oil (6)","1-use each; 1 unit burns for 1 hour"],
     ["Pitons (6)","Requires a Hammer or similar Item to secure"],
-    ["Provisions (6)","1 Provision (food & water) required per day (2 for Large creatures)"],
+    ["Provisions (6)","1 Provision/day (2 for Large)"],
     ["Rope","Far length"],
-    ["Small Mirror","Also included in a 3 GP Make-up Kit"],
+    ["Small Mirror","Also in a 3 GP Make-up Kit"],
     ["Tinderbox","—"],
-    ["Torches (6)","1-use each; lights a Near Area; 1 unit burns for 1 hour"]
+    ["Torches (6)","1-use each; lights a Near Area; 1 hour burn"]
   ],
   gp3: [
-    ["Animal Companion*","3 GP Small 1# e.g. rat, carry 1#, pull 2#, Stamina 1; 6 GP Medium 6# e.g. dog, carry 3#, pull 6#, Stamina 2; 12 GP Large 4P e.g. horse, carry 1P, pull 2P, Stamina 3"],
-    ["Armor","(+1 Stamina; ½ Move to Climb & Swim); or Armor, Heavy (additional 1 Stamina; -1D Dodge)"],
-    ["Arrows (6)","Retrieve for re-use is 3/6 chance"],
-    ["Cart","Per 6# load capacity; -1D to pull"],
-    ["Lantern","Lights a Near Area if fully open, or Far Point if beam focused; can also be fully shuttered"],
-    ["Net / Bolas","Net: 2H Throw; Medium Target suffers -1D, requires 1 Action to free; or Bolas for 1H Throw"],
-    ["Shield / Heavy Shield","Shield (1H); or Heavy Shield (use once per Round to Block and negate all DMG if successful)"],
+    ["Animal Companion*","Small/Medium/Large with carries/pulls; Stamina 1–3"],
+    ["Armor","(+1 Stamina; ½ Move to Climb & Swim) / Heavy (+1 Stamina; -1D Dodge)"],
+    ["Arrows (6)","Retrieve 3/6"],
+    ["Cart","Per 6# load; -1D to pull"],
+    ["Lantern","Near if open; Far point if focused"],
+    ["Net / Bolas","Net: 2H Throw; Medium target -1D / Bolas: 1H Throw"],
+    ["Shield / Heavy Shield","Block bonus; Heavy can fully negate once/round if successful"],
     ["Spyglass","—"],
-    ["Throwing Blades (6)","Near; retrieve for re-use is 3/6 chance"],
-    ["Tinker Tools / Specialist Tools","Tinker Tools include lock picks; Specialist Tools: nominate profession/purpose e.g. Hunting"],
-    ["Weapon / Silver Weapon","Weapon (specify 1H or 2H); Silver Weapon x2 cost (+1 DMG if Vulnerable; Breaks 1/6 per use)"]
+    ["Throwing Blades (6)","Retrieve 3/6"],
+    ["Tinker Tools / Specialist Tools","Lock picks / pick a profession"],
+    ["Weapon / Silver Weapon","1H/2H; Silver costs x2, +1 DMG vs Vulnerable, breaks 1/6"]
   ],
   gp6: [
-    ["Healing Kit or Healing Herbs (6)","Standard MIND Check = -1 DMG; Fail still uses 1 unit"],
-    ["Hireling*","Cost is per Adventure; Hero equips; carry 6#; pull 6# per 1H at -1D; starts with 1 Community Skill & 1 Role Skill; Stamina 2; max 1 Spell, if applicable"],
-    ["Holy Water","2 DMG versus Evil"],
-    ["Magic Recharge +1","Recharges Artefacts"],
-    ["Poison","Standard Check using MIGHT or Size (whichever is higher). Fail = 1 DMG, and -1D for +1D R"],
-    ["Potion","Self or Touch; automatic 2 Successes. 1-use."],
-    ["Scroll","Up to Far Target; hold open, speak & Standard MIND Check = 2 Successes and Scroll expended; no Spell Drain. Failing to activate does not expend the Magic"],
-    ["Spellcasting Item or Weapon","Unique to caster; 1H or 2H. Casting is at -1D without this"]
+    ["Healing Kit/Herbs (6)","Std MIND = -1 DMG; Fail still uses 1"],
+    ["Hireling*","Carry 6#; pull 6#/1H -1D; Stamina 2; 1 Community + 1 Role Skill"],
+    ["Holy Water","2 DMG vs Evil"],
+    ["Magic Recharge +1","Recharge Artefacts"],
+    ["Poison","Std Check MIGHT or Size; Fail: 1 DMG and -1D for +1D R"],
+    ["Potion","Self/Touch; auto 2 Successes"],
+    ["Scroll","Far; Std MIND = 2 Succ; no Drain on success/fail"],
+    ["Spellcasting Item/Weapon","Unique to caster; -1D to cast without"]
   ],
-  foot: "* Hirelings & Animal Companions: a Hero can command a combined maximum number equal to 6 minus their Proficiency. The GM plays the Hireling or Companion, but for Actions/Reactions the player rolls 1D (+/- any Bonuses/Penalties). Each 1 is 1 Success (a Spellcaster only has 1 Spell, but no Spell Drain)."
+  foot: "* Limit on companions/hirelings: 6 − Proficiency."
 };
 
 /* ===== Item notes for sheet display ===== */
@@ -411,9 +423,7 @@ function initShop(){
 }
 function makeShop(divID,list,cost){
   let html="";
-  list.forEach(it=>{
-    html+=`<button class="buy-btn" onclick="buyItem('${it}',${cost})">${it} (${cost} GP)</button> `;
-  });
+  list.forEach(it=>{ html+=`<button class="buy-btn" onclick="buyItem('${it}',${cost})">${it} (${cost} GP)</button> `; });
   document.getElementById(divID).innerHTML=html;
 }
 function buyItem(name,cost){
@@ -478,10 +488,12 @@ function updateSheet(){
     spellBlock.innerHTML=html;
   } else { spellBlock.innerHTML="<p>—</p>"; }
 
-  // Carry Capacity
+  // Carry Capacity = Proficiency + 6 (only)
   const carryCap = (prof !== "-") ? (prof + 6) : "-";
-  const carryMax = (prof !== "-") ? (prof + 9) : "-";
-  document.getElementById("outCarry").innerText = carryCap + " (max " + carryMax + ")";
+  document.getElementById("outCarry").innerText = carryCap;
+
+  // Pouch "Other"
+  const otherText = document.getElementById("pouchOtherInput")?.value?.trim() || "—";
 
   // Output to sheet
   document.getElementById("outName").innerText=name;
@@ -498,6 +510,9 @@ function updateSheet(){
   document.getElementById("outGear").innerHTML=(gear||[]).map(g=>`<li>${g}</li>`).join("") || "<li>—</li>";
   document.getElementById("gold").innerText=gp;
   document.getElementById("silver").innerText=sp;
+  document.getElementById("outGold").innerText=gp;
+  document.getElementById("outSilver").innerText=sp;
+  document.getElementById("outOther").innerText=otherText;
 
   // Image on sheet
   const avatarSheet = document.getElementById("avatarSheet");
@@ -513,8 +528,9 @@ function resetCreator(){
   avatarDataURL=""; avatarFilename="";
   const avatar = document.getElementById("avatar"); if(avatar) avatar.removeAttribute("src");
   const imgInput = document.getElementById("imgInput"); if(imgInput) imgInput.value="";
+  document.getElementById("pouchOtherInput").value="";
   document.querySelectorAll("input, textarea, select").forEach(el=>{
-    if(el.id==="imgInput") return;
+    if(el.id==="imgInput" || el.id==="pouchOtherInput") return;
     if(el.multiple) el.selectedIndex=-1; else el.value="";
   });
   // Discord style defaults
@@ -526,7 +542,7 @@ function resetCreator(){
   goto(0);
 }
 
-/* ===== Copy for Discord (no counters, fallback-first) ===== */
+/* ===== Copy for Discord (fallback-first, no counters) ===== */
 async function copyText(text){
   try{
     const ta=document.createElement("textarea");
@@ -552,7 +568,7 @@ function colorize(s,c){ return c==="none" ? s : ANSI.fg[c] + s + ANSI.reset; }
 function makeDivider(kind){ const w=40; if(kind==="double") return "═".repeat(w); if(kind==="heavy") return "━".repeat(w); if(kind==="equals") return "=".repeat(w); return "─".repeat(w); }
 function frameTitle(txt,frame){ if(frame==="none") return txt; if(frame==="brackets") return `[ ${txt} ]`; if(frame==="rounded") return `╭ ${txt} ╮`; if(frame==="heavy") return `┏ ${txt} ┓`; if(frame==="double") return `╔ ${txt} ╗`; return txt; }
 
-/* Build Discord text (sections always present) */
+/* Build Discord text (sections always present; POUCH before EQUIPMENT) */
 function buildDiscordBlock(){
   const DIV = (document.getElementById("dsDivider")||{}).value || "dash";
   const FONT = (document.getElementById("dsFont")||{}).value || "normal";
@@ -572,7 +588,8 @@ function buildDiscordBlock(){
     carry:get("outCarry"), langs:get("outLang"),
     skills:list("#outSkills li"),
     spells:linesOf(document.getElementById("spellBlock").innerText.replace(/^Arcane Spells:|^Holy Spells:/gi,"")),
-    gear:list("#outGear li")
+    gear:list("#outGear li"),
+    gold:get("outGold"), silver:get("outSilver"), other:get("outOther")
   };
 
   const out=[];
@@ -588,7 +605,7 @@ function buildDiscordBlock(){
   if(d.app  && d.app !=="-") out.push(`Appearance: ${d.app}`);
   if(avatarDataURL){
     const safe=(d.name||"character").trim().replace(/[^a-z0-9_\-]+/gi,"_")||"character";
-    const ext=(avatarFilename.split(".").pop()||"png").toLowerCase();
+    const ext=( (document.getElementById("imgInput")?.files?.[0]?.name || "png").split(".").pop() || "png").toLowerCase();
     out.push(`Image: ${safe}_portrait.${ext} (attach this file when posting)`);
   }
   out.push(divider);
@@ -612,6 +629,13 @@ function buildDiscordBlock(){
   if(d.spells.length && !(d.spells.length===1 && d.spells[0]==="—")) d.spells.forEach(s=>out.push(s)); else out.push("—");
   out.push(divider);
 
+  // POUCH right before EQUIPMENT
+  out.push(hdr("POUCH"));
+  out.push(`Gold: ${d.gold} GP`);
+  out.push(`Silver: ${d.silver} SP`);
+  out.push(`Other: ${d.other}`);
+  out.push(divider);
+
   out.push(hdr("EQUIPMENT"));
   if(d.gear.length) d.gear.forEach(g=>out.push(`• ${g}`)); else out.push("—");
 
@@ -631,5 +655,6 @@ init();
 
 </body>
 </html>
+
 
   
