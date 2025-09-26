@@ -5,7 +5,7 @@
 <title>Age of Adventure – Character, Companion & Hireling Tools</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=EB+Garamond&display=swap" rel="stylesheet">
 <style>
-  :root{--ink:#2c2c2c;--paper:#f4f0e6;--panel:#fffdf9;--sheet:#fffef9;--gold:#b8a97f;--head:#3a2c1a}
+  :root{--ink:#2c2c2c;--paper:#f4f0e6;--panel:#fffdf9;--sheet:#fffef9;--gold:#b8a97f;--head:#3a2c1a;--warn:#9b1c1c}
   *{box-sizing:border-box}
   body{font-family:"EB Garamond",serif;background:var(--paper);margin:0;padding:20px;color:var(--ink)}
   h1{font-family:"Cinzel",serif;text-align:center;font-size:2.4em;margin:8px 0 18px;color:var(--head)}
@@ -35,6 +35,7 @@
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .tools-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
   .muted{color:#6d5b3f;font-style:italic}
+  .warn{color:var(--warn);font-weight:700}
   .hidden{display:none !important}
   @media print{
     body{background:#fff}
@@ -55,7 +56,7 @@
     <div class="choice-card">
       <h3>Create Character</h3>
       <p class="muted">Walk through steps, then export to PDF or Discord.</p>
-      <button class="btn next-btn" onclick="route('char-1')">Start Character Creator</button>
+      <button class="btn next-btn" onclick="route('char-0')">Start Character Creator</button>
     </div>
     <div class="choice-card">
       <h3>Design Animal Companion</h3>
@@ -72,6 +73,70 @@
       <p class="muted">Browse items and descriptions.</p>
       <button class="btn link-btn" onclick="route('store')">Open General Store</button>
     </div>
+  </div>
+</div>
+
+<!-- ========== STEP 0: NEW vs SEASONED ========== -->
+<div class="step hidden" id="char-0">
+  <h2>Step 0: New or Seasoned Adventurer?</h2>
+  <div class="choice-grid">
+    <div class="choice-card">
+      <h3>New Adventurer</h3>
+      <p class="muted">Standard random Gold & Hero Point roll.</p>
+      <button class="btn next-btn" onclick="chooseNew()">Choose New</button>
+    </div>
+    <div class="choice-card">
+      <h3>Seasoned Adventurer</h3>
+      <p class="muted">Override Gold, +1 Hero Point, optional Magical Artefact.</p>
+      <button class="btn link-btn" onclick="showSeasoned()">Choose Seasoned</button>
+    </div>
+  </div>
+
+  <div id="seasonedBox" class="panel hidden">
+    <h3>Seasoned Options</h3>
+    <div class="grid2">
+      <label>Override Gold (GP)
+        <input id="seasonGold" type="number" min="0" step="1" placeholder="leave blank for random">
+      </label>
+      <label>
+        <input id="seasonHeroPlus1" type="checkbox"> Add +1 Hero Point
+      </label>
+    </div>
+    <label><input id="seasonArtefactOn" type="checkbox" onchange="toggleArtefact()"> Include a Magical Artefact (counts as an equipment slot)</label>
+
+    <div id="artefactBox" class="panel hidden" style="margin-top:10px">
+      <h4>Artefact Designer</h4>
+      <div class="grid2">
+        <label>Name <input id="artName" type="text" placeholder="e.g., Sunshard"></label>
+        <label>Type
+          <select id="artType">
+            <option value="Standard">Standard (MIND check to activate; value 30 GP)</option>
+            <option value="Fabled">Fabled (no MIND check; value 150 GP)</option>
+          </select>
+        </label>
+        <label>Range
+          <select id="artRange">
+            <option>Touch (Melee/Self)</option>
+            <option>Ranged (Near–Far)</option>
+          </select>
+        </label>
+        <label>Charges
+          <input id="artCharges" type="text" placeholder="e.g., 1D, 3, or 6 max">
+        </label>
+      </div>
+      <label class="grow">Effect / Notes
+        <textarea id="artEffect" placeholder="Describe form & effect (often tied to the Hero’s Goal)."></textarea>
+      </label>
+    </div>
+
+    <div>
+      <button class="btn next-btn" onclick="applySeasoned()">Apply & Continue</button>
+      <button class="btn reset-btn" onclick="route('home')">Cancel</button>
+    </div>
+  </div>
+
+  <div style="margin-top:8px">
+    <button class="btn reset-btn" onclick="route('home')">Back</button>
   </div>
 </div>
 
@@ -97,7 +162,6 @@
     </label>
   </div>
 
-  <!-- Custom community fields -->
   <div id="customCommunityBox" class="panel hidden">
     <h3>Custom Community</h3>
     <div class="grid2">
@@ -112,10 +176,9 @@
         <input id="customCommunitySkill2" type="text" placeholder="e.g., Storm Sense" oninput="updateChar()">
       </label>
     </div>
-    <p class="muted">Languages will include <strong>Common</strong> and <strong>&lt;Community Name&gt; tongue</strong>.</p>
+    <p class="muted">Languages include <strong>Common</strong> + <strong>&lt;Community Name&gt; tongue</strong>.</p>
   </div>
 
-  <!-- Custom role fields -->
   <div id="customRoleBox" class="panel hidden">
     <h3>Custom Role</h3>
     <div class="grid2">
@@ -134,12 +197,13 @@
 
   <div>
     <button class="btn next-btn" onclick="route('char-2')">Next</button>
-    <button class="btn reset-btn" onclick="route('home'); resetAll()">Back</button>
+    <button class="btn reset-btn" onclick="route('char-0')">Back</button>
   </div>
 </div>
 
 <div class="step hidden" id="char-2">
   <h2>Step 2: Proficiency</h2>
+  <p class="muted">(High favors MIGHT; Low favors MIND; <strong>3</strong> balances both.)</p>
   <input type="number" id="prof" min="2" max="5" onchange="updateChar()">
   <div>
     <button class="btn next-btn" onclick="route('char-3')">Next</button>
@@ -183,7 +247,6 @@
       <label class="muted">Upload image (JPG/PNG/GIF)
         <input type="file" id="imgInput" accept="image/*" onchange="loadAvatar(event)">
       </label>
-      <div><button class="btn link-btn" onclick="downloadAvatar()">Download Image</button></div>
     </div>
   </div>
   <div>
@@ -226,12 +289,12 @@
         <label><input type="radio" name="otherDest" value="pouch" checked> To Pouch</label>
         <label><input type="radio" name="otherDest" value="equipment"> To Equipment</label>
         <button class="btn link-btn" onclick="addOther()">Add</button>
+        <button class="btn link-btn" onclick="undoLastPurchase()">Undo last purchase</button>
       </div>
 
       <h4>1 GP Items</h4><div id="shop1"></div>
       <h4>3 GP Items</h4><div id="shop3"></div>
       <h4>6 GP Items</h4><div id="shop6"></div>
-      <div><button class="btn link-btn" onclick="undoLastPurchase()">Undo last purchase</button></div>
     </div>
 
     <div class="panel">
@@ -284,6 +347,7 @@
 <!-- CHARACTER SHEET -->
 <div class="sheet hidden" id="charSheet">
   <h2>Character Sheet</h2>
+
   <div class="section">
     <h4>Identity</h4><div class="hr"></div>
     <div class="row" style="align-items:center">
@@ -304,12 +368,8 @@
     <p><strong>Proficiency:</strong> <span id="outProf">-</span></p>
     <p><strong>Stamina:</strong> <span id="outStamina">-</span></p>
     <p id="outArmorNote" class="muted" style="margin-top:-6px">Armor: None</p>
-    <p><strong>Hero Points:</strong> <span id="outHero">-</span></p>
-    <p><strong>Carry Capacity:</strong> <span id="outCarry">-</span></p>
-  </div>
-
-  <div class="section">
-    <h4>Languages</h4><div class="hr"></div>
+    <p><strong>Hero Points:</strong> <span id="outHeroTotal">-</span></p>
+    <p id="outHeroNote" class="muted" style="margin-top:-6px">—</p>
     <p><strong>Languages:</strong> <span id="outLang">Common</span></p>
   </div>
 
@@ -331,8 +391,14 @@
   </div>
 
   <div class="section">
-    <h4>Equipment</h4><div class="hr"></div>
+    <h4>Equipment <span id="equipWarn" class="warn"></span></h4><div class="hr"></div>
+    <p id="equipCarryLine" class="muted" style="margin-top:-6px">Carry Capacity: -</p>
     <ul id="outGear"></ul>
+  </div>
+
+  <div class="section">
+    <h4>Notes</h4><div class="hr"></div>
+    <textarea id="charNotes" placeholder="Campaign, bonds, reminders… (not printed to Discord export)"></textarea>
   </div>
 </div>
 
@@ -341,7 +407,7 @@
   <h2>Animal Companion Designer</h2>
   <div class="grid2">
     <label>Name <input id="allyName" type="text" oninput="updateAlly()"></label>
-    <label>Role / Type <input id="allyRole" type="text" placeholder="e.g., scout, mount" oninput="updateAlly()"></label>
+    <label>Type <input id="allyRole" type="text" placeholder="e.g., rat, dog, horse" oninput="updateAlly()"></label>
     <label>Size
       <select id="allySize" onchange="updateAlly()">
         <option value="Small">Small (3 GP, 1#)</option>
@@ -352,8 +418,11 @@
     <label>Stamina <input id="allyStamina" type="number" min="1" value="1" oninput="updateAlly()"></label>
     <label>Carry <input id="allyCarry" type="text" value="1#" oninput="updateAlly()"></label>
     <label>Pull <input id="allyPull" type="text" value="2#" oninput="updateAlly()"></label>
-    <label class="grow">Skills / Traits (comma separated)
-      <input id="allySkills" type="text" placeholder="e.g., Keen Smell, Sure-Footed" oninput="updateAlly()">
+    <label class="grow">Skills (comma separated)
+      <input id="allySkills" type="text" placeholder="1 = 1 Success; +1D if Skilled" oninput="updateAlly()">
+    </label>
+    <label class="grow">Temperament
+      <input id="allyTemper" type="text" placeholder="e.g., loyal, skittish, aggressive" oninput="updateAlly()">
     </label>
     <label class="grow">Gear (comma separated)
       <input id="allyGear" type="text" placeholder="e.g., Saddle, Saddlebags" oninput="updateAlly()">
@@ -382,8 +451,11 @@
     <p><strong>Carry:</strong> <span id="allyOutCarry">1#</span></p>
     <p><strong>Pull:</strong> <span id="allyOutPull">2#</span></p>
   </div>
-  <div class="section"><h4>Skills / Traits</h4><div class="hr"></div>
+  <div class="section"><h4>Skills</h4><div class="hr"></div>
     <ul id="allyOutSkills"><li>—</li></ul>
+  </div>
+  <div class="section"><h4>Temperament</h4><div class="hr"></div>
+    <p id="allyOutTemper">—</p>
   </div>
   <div class="section"><h4>Gear</h4><div class="hr"></div>
     <ul id="allyOutGear"><li>—</li></ul>
@@ -396,34 +468,60 @@
 <!-- ========== HIRELING DESIGNER & SHEET ========== -->
 <div class="step hidden" id="hire">
   <h2>Hireling Designer</h2>
+
   <div class="grid2">
     <label>Name <input id="hireName" type="text" oninput="updateHire()"></label>
     <label>Role / Job <input id="hireRole" type="text" placeholder="e.g., porter, guard" oninput="updateHire()"></label>
-    <label>Community Skill <input id="hireCmmSkill" type="text" placeholder="choose 1" oninput="updateHire()"></label>
-    <label>Role Skill <input id="hireRoleSkill" type="text" placeholder="choose 1" oninput="updateHire()"></label>
+
+    <!-- Community Skill -->
+    <label>Community Skill
+      <select id="hireCmmSelect" onchange="onHireCmmChange()"></select>
+    </label>
+    <label class="hidden" id="hireCmmCustomLabel">Custom Community Skill
+      <input id="hireCmmSkill" type="text" placeholder="type a skill" oninput="updateHire()">
+    </label>
+
+    <!-- Role Skill -->
+    <label>Role Skill
+      <select id="hireRoleSelect" onchange="onHireRoleChange()"></select>
+    </label>
+    <label class="hidden" id="hireRoleCustomLabel">Custom Role Skill
+      <input id="hireRoleSkill" type="text" placeholder="type a skill" oninput="updateHire()">
+    </label>
+
     <label>Stamina <input id="hireStamina" type="number" min="1" value="2" oninput="updateHire()"></label>
+
     <label>Can Cast 1 Spell?
-      <select id="hireSpellYN" onchange="updateHire()">
+      <select id="hireSpellYN" onchange="updateHire();toggleHireSpell()">
         <option value="No">No</option><option value="Yes">Yes</option>
       </select>
     </label>
-    <label class="grow">If Yes, Spell Name <input id="hireSpellName" type="text" oninput="updateHire()"></label>
+
+    <label class="hidden" id="hireSpellSelectLabel">Spell
+      <select id="hireSpellSelect" onchange="onHireSpellChange()"></select>
+    </label>
+    <label class="hidden" id="hireSpellCustomLabel">Custom Spell
+      <input id="hireSpellName" type="text" placeholder="type a spell name" oninput="updateHire()">
+    </label>
+
     <label class="grow">Gear (comma separated) <input id="hireGear" type="text" placeholder="You must equip them!" oninput="updateHire()"></label>
   </div>
+
   <div class="panel">
     <h3>Hireling Statline (Rules)</h3>
     <ul>
       <li>Cost: Paid per adventure (GM sets fee).</li>
       <li>Equipment: Hero must provide weapons, armor, gear.</li>
       <li>Carry Capacity: 6#.</li>
-      <li>Pull Capacity: 6# per 1H carried (each 1H = –1D penalty).</li>
+      <li>Pull Capacity: 6# per 1H (–1D penalty).</li>
       <li>Skills: Starts with <em>1 Community Skill</em> and <em>1 Role Skill</em> (chosen by the Hero).</li>
       <li>Stamina: 2 (editable above).</li>
       <li>Magic: May know max. 1 spell (if applicable).</li>
-      <li>Actions/Reactions: Player rolls 1D for them (1 = 1 Success, apply bonuses/penalties).</li>
+      <li>Actions/Reactions: Player rolls 1D for them (+1D if Skilled; 1 = 1 Success).</li>
       <li>Control: GM roleplays the hireling.</li>
     </ul>
   </div>
+
   <div>
     <button class="btn print-btn" onclick="printSheet('hireSheet')">Download PDF</button>
     <button class="btn next-btn" onclick="copyDiscordHire()">Copy for Discord</button>
@@ -441,14 +539,15 @@
   <div class="section"><h4>Stats</h4><div class="hr"></div>
     <p><strong>Stamina:</strong> <span id="hireOutStamina">2</span></p>
     <p><strong>Carry:</strong> 6#</p>
-    <p><strong>Pull:</strong> 6# per 1H (–1D / 1H)</p>
+    <p><strong>Pull:</strong> 6# per 1H (–1D)</p>
   </div>
   <div class="section"><h4>Skills</h4><div class="hr"></div>
     <ul id="hireOutSkills"><li>Community Skill: —</li><li>Role Skill: —</li></ul>
+    <p class="muted" style="margin-top:6px">Player rolls 1D for them (+1D if Skilled; 1 = 1 Success).</p>
   </div>
   <div class="section"><h4>Magic</h4><div class="hr"></div>
     <p><strong>Can cast 1 spell?</strong> <span id="hireOutSpellYN">No</span></p>
-    <p><strong>Spell Name:</strong> <span id="hireOutSpellName">—</span></p>
+    <p><strong>Spell:</strong> <span id="hireOutSpellName">—</span></p>
   </div>
   <div class="section"><h4>Gear</h4><div class="hr"></div>
     <ul id="hireOutGear"><li>—</li></ul>
@@ -473,38 +572,27 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 
 /* ---------- Routing ---------- */
 function route(id){
-  ['home','char-1','char-2','char-3','char-4','char-5','char-6','char-7','char-8','ally','hire','store']
-    .forEach(k => { const el = document.getElementById(k); if(el) el.classList.add('hidden'); });
-
-  ['charSheet','allySheet','hireSheet'].forEach(sid=>{
-    const sEl=document.getElementById(sid);
-    if(sEl) sEl.classList.add('hidden');
-  });
-
-  const el = document.getElementById(id);
-  if(el) el.classList.remove('hidden');
-
-  if(id.startsWith('char-')) { $('#charSheet').classList.remove('hidden'); }
-  else if(id==='ally') { $('#allySheet').classList.remove('hidden'); }
-  else if(id==='hire') { $('#hireSheet').classList.remove('hidden'); }
-
+  const screens=['home','char-0','char-1','char-2','char-3','char-4','char-5','char-6','char-7','char-8','ally','hire','store'];
+  screens.forEach(k=>{ const el=document.getElementById(k); if(el) el.classList.add('hidden'); });
+  ['charSheet','allySheet','hireSheet'].forEach(sid=>{ const el=document.getElementById(sid); if(el) el.classList.add('hidden'); });
+  const el=document.getElementById(id); if(el) el.classList.remove('hidden');
+  if(id.startsWith('char-')) $('#charSheet').classList.remove('hidden');
+  else if(id==='ally') $('#allySheet').classList.remove('hidden');
+  else if(id==='hire') $('#hireSheet').classList.remove('hidden');
   updateChar(); updateAlly(); updateHire();
 }
 
-/* Print one sheet */
+/* ---------- Print ---------- */
 function printSheet(sheetId){
-  $$('.sheet').forEach(s => s.classList.remove('printing'));
-  const target = document.getElementById(sheetId);
-  if(!target) return;
-  const wasHidden = target.classList.contains('hidden');
+  $$('.sheet').forEach(s=>s.classList.remove('printing'));
+  const target=document.getElementById(sheetId); if(!target) return;
+  const wasHidden=target.classList.contains('hidden');
   if(wasHidden) target.classList.remove('hidden');
-  target.classList.add('printing');
-  window.print();
-  target.classList.remove('printing');
+  target.classList.add('printing'); window.print(); target.classList.remove('printing');
   if(wasHidden) target.classList.add('hidden');
 }
 
-/* Copy helper */
+/* ---------- Clipboard ---------- */
 async function copyText(text){
   try{
     const ta=document.createElement("textarea");
@@ -517,7 +605,7 @@ async function copyText(text){
   }catch(e){ console.error(e); alert("Copy failed — press Ctrl/Cmd+C."); return false; }
 }
 
-/* Discord helpers */
+/* ---------- Discord helpers ---------- */
 function toBold(s){ return s
   .replace(/[A-Z]/g,c=>String.fromCodePoint(c.charCodeAt(0)-0x41+0x1D400))
   .replace(/[a-z]/g,c=>String.fromCodePoint(c.charCodeAt(0)-0x61+0x1D41A))
@@ -530,20 +618,49 @@ function colorize(s,c){ return c==="none" ? s : ANSI.fg[c] + s + ANSI.reset; }
 function makeDivider(kind){ const w=40; if(kind==="double")return"═".repeat(w); if(kind==="heavy")return"━".repeat(w); if(kind==="equals")return"=".repeat(w); return"─".repeat(w); }
 function frameTitle(txt,frame){ if(frame==="none")return txt; if(frame==="brackets")return`[ ${txt} ]`; if(frame==="rounded")return`╭ ${txt} ╮`; if(frame==="heavy")return`┏ ${txt} ┓`; if(frame==="double")return`╔ ${txt} ╗`; return txt; }
 
-/* ---------- Character data/state ---------- */
+/* ---------- Character state ---------- */
 function rollDice(s){ return Math.floor(Math.random()*s)+1; }
-let gp, sp, gear, purchaseHistory = [];
+let gp, sp, gear, purchaseHistory=[];
 let avatarDataURL="", avatarFilename="", pouchOthers=[];
+let heroRoll=0, seasonedBonus=false, seasonedMode=false;
+let artefactOn=false, artefact={name:"",type:"Standard",range:"Touch (Melee/Self)",charges:"",effect:""};
+let lastOverCap=false;
 
-/* base skills */
+/* Skills DB (with tags) */
 const skillsDB = {
-  Dwarf:["Detect","Teamwork"], Elf:["Acrobatics","Pathfinder"], Goblin:["Darksee","Underground"],
-  Halfling:["Hide","Willpower"], Human:["Parley","Languages (+2)"], Orc:["Athletics","Resilience"],
-  Archer:["Launched Weapons","1H Throw"], Barbarian:["2H Weapons","2H Throw"],
-  Cleric:["Religion"], Rogue:["Sneak","Tinker"], Warrior:["1H Weapons","Unarmed"], Wizard:["Arcana"]
+  Dwarf:[["Detect","MIND"],["Teamwork","Help"]],
+  Elf:[["Acrobatics","MIGHT"],["Pathfinder","MIND"]],
+  Goblin:[["Darksee","Automatic"],["Underground","MIND"]],
+  Halfling:[["Hide","MIND"],["Willpower","MIND"]],
+  Human:[["Parley","MIND"],["Languages (+2)","MIND"]],
+  Orc:[["Athletics","MIGHT"],["Resilience","MIGHT"]],
+  Archer:[["Launched Weapons","MIGHT"],["1H Throw","MIGHT"]],
+  Barbarian:[["2H Weapons","MIGHT"],["2H Throw","MIGHT"]],
+  Cleric:[["Religion","MIND"]],
+  Rogue:[["Sneak","MIND"],["Tinker","MIND"]],
+  Warrior:[["1H Weapons","MIGHT"],["Unarmed","MIGHT"]],
+  Wizard:[["Arcana","MIND"]]
 };
 
-/* Shop + notes (ARMOR updated) */
+/* Spells */
+const spellsArcane={
+  "Darksee":"MIND",
+  "Levitate":"MIND",
+  "Missile":"MIND",
+  "Protection":"MIND",
+  "Speak":"MIND",
+  "Teleport":"MIND"
+};
+const spellsHoly={
+  "Bless":"MIND",
+  "Divine":"MIND",
+  "Heal":"MIND",
+  "Light":"MIND",
+  "Smite":"MIND",
+  "Ward":"MIND"
+};
+
+/* Store/Shop */
 const shop={ gp1:["Acid","Caltrops","Candles (6)","Fire Pot","Grappling Hook","Oil (6)","Pitons (6)","Provisions (6)","Rope","Small Mirror","Tinderbox","Torches (6)"],
              gp3:["Animal Companion (Small)","Armor","Heavy Armor","Arrows (6)","Cart","Lantern","Net","Bolas","Shield","Heavy Shield","Spyglass","Throwing Blades (6)","Tinker Tools","Specialist Tools","Weapon (1H/2H)","Silver Weapon"],
              gp6:["Healing Kit/Herbs (6)","Hireling","Holy Water","Magic Recharge +1","Poison","Potion","Scroll","Spellcasting Item"] };
@@ -562,13 +679,13 @@ const itemNotes={
 };
 function formatItem(n){ return itemNotes[n] ? `${n} (${itemNotes[n]})` : n; }
 
-/* General Store text */
 const storeCatalog = {
   gp1:[["Acid","1 DMG or dissolves 1# Item (e.g., armor or lock)"],["Caltrops","Traverse = halves Move or 1 DMG"],["Candles (6)","Near (Lantern), 1h each"],["Fire Pot","1 Fire DMG on impact"],["Grappling Hook","—"],["Oil (6)","1h each"],["Pitons (6)","Needs hammer"],["Provisions (6)","1/day (2 for Large)"],["Rope","Far length"],["Small Mirror","—"],["Tinderbox","—"],["Torches (6)","Near light, 1h"]],
   gp3:[["Animal Companion*","Small/Medium/Large"],["Armor / Heavy","+1 or +2 Stamina; penalties listed on sheet"],["Arrows (6)","Retrieve 3/6"],["Cart","Per 6# load; -1D pull"],["Lantern","Near open / Far point beam"],["Net / Bolas","2H throw snare / 1H"],["Shield / Heavy","Block; heavy can fully negate once/round if success"],["Spyglass","—"],["Throwing Blades (6)","Retrieve 3/6"],["Tinker / Specialist Tools","Locks / chosen profession"],["Weapon / Silver","1H/2H; silver x2 cost, +1 DMG vs vuln, break 1/6"]],
   gp6:[["Healing Kit/Herbs (6)","Std MIND = -1 DMG"],["Hireling*","See rules"],["Holy Water","2 DMG vs Evil"],["Magic Recharge +1","Recharge artefacts"],["Poison","Check might/size; fail=1 DMG & -1D +1D R"],["Potion","2 successes, 1-use"],["Scroll","Far; Std MIND=2 succ; no drain on success/fail"],["Spellcasting Item/Weapon","Unique to caster; -1D without"]],
   foot:"* Combined companions/hirelings ≤ (6 − Proficiency)."
 };
+
 function renderStore(){
   const makeLis = arr => arr.map(([n,d])=>`<li><strong>${n}</strong>${d && d!=='—' ? ` — ${d}` : ''}</li>`).join("");
   $("#store1").innerHTML = makeLis(storeCatalog.gp1);
@@ -577,17 +694,18 @@ function renderStore(){
   $("#storeFoot").innerText = storeCatalog.foot;
 }
 
-/* Shop rendering/buy/undo */
 function initShop(){
   const make = (sel,list,cost) => { $(sel).innerHTML = list.map(it=>`<button class="buy-btn" onclick="buyItem('${it}',${cost})">${it} (${cost} GP)</button>`).join(" "); };
   make("#shop1",shop.gp1,1); make("#shop3",shop.gp3,3); make("#shop6",shop.gp6,6);
 }
+
 function buyItem(name,cost){
-  if(gp>=cost){ gp-=cost; gear.push(formatItem(name)); purchaseHistory.push({name:formatItem(name), cost}); updateChar(); }
+  if(gp>=cost){ gp-=cost; gear.push(formatItem(name)); purchaseHistory.push({name:formatItem(name), cost}); updateChar(true); }
   else if(confirm(`Not enough GP (${gp} left). Buy ${name} anyway and go into debt?`)){
-    gp-=cost; gear.push(formatItem(name)); purchaseHistory.push({name:formatItem(name), cost}); updateChar();
+    gp-=cost; gear.push(formatItem(name)); purchaseHistory.push({name:formatItem(name), cost}); updateChar(true);
   }
 }
+
 function undoLastPurchase(){
   const last = purchaseHistory.pop();
   if(!last){ alert("Nothing to undo."); return; }
@@ -603,24 +721,38 @@ function addOther(){
   if(!raw){ alert("Type something to add."); return; }
   const dest = (document.querySelector('input[name="otherDest"]:checked')||{}).value || "pouch";
   if(dest==="equipment") gear.push(raw); else pouchOthers.push(raw);
-  $("#pouchOtherInput").value=""; updateChar();
+  $("#pouchOtherInput").value=""; updateChar(true);
 }
 
-/* Numbered equipment list (0# base; pouch contents not duplicated) */
-function numberedGearLines(){
-  const base0 = `0#: Adventurer's Clothing; Backpack; Pouch`;
-  const rest = (gear||[]).filter(it => it!=="Clothing" && it!=="Backpack");
-  return [base0, ...rest.map((it,i)=>`${i+1}#: ${it}`)];
+/* Step 0 logic */
+function chooseNew(){
+  seasonedMode=false; seasonedBonus=false; artefactOn=false;
+  artefact={name:"",type:"Standard",range:"Touch (Melee/Self)",charges:"",effect:""};
+  route('char-1');
 }
-
-/* Determine equipped armor and bonus */
-function getEquippedArmor(){
-  // Look for explicit Armor and Heavy Armor in gear (formatted with notes)
-  const hasHeavy = (gear||[]).some(g => /^Heavy Armor\b/.test(g));
-  const hasArmor = (gear||[]).some(g => /^Armor\b/.test(g));
-  if(hasHeavy) return { type:"Heavy Armor", bonus:2, note:"Heavy Armor (+2 Stamina; ½ Move to Climb & Swim; -1D Dodge)" };
-  if(hasArmor) return { type:"Armor", bonus:1, note:"Armor (+1 Stamina; ½ Move to Climb & Swim)" };
-  return { type:"None", bonus:0, note:"Armor: None" };
+function showSeasoned(){
+  seasonedMode=true; $("#seasonedBox").classList.remove("hidden");
+}
+function toggleArtefact(){
+  artefactOn = $("#seasonArtefactOn").checked;
+  $("#artefactBox").classList.toggle("hidden", !artefactOn);
+}
+function applySeasoned(){
+  seasonedMode=true;
+  const goldStr=$("#seasonGold").value.trim();
+  if(goldStr!==""){ const val=parseInt(goldStr,10); if(!isNaN(val) && val>=0) gp = val; }
+  seasonedBonus = $("#seasonHeroPlus1").checked;
+  artefactOn = $("#seasonArtefactOn").checked;
+  if(artefactOn){
+    artefact.name = ($("#artName").value||"").trim() || "Unnamed Artefact";
+    artefact.type = $("#artType").value || "Standard";
+    artefact.range = $("#artRange").value || "Touch (Melee/Self)";
+    artefact.charges = ($("#artCharges").value||"").trim() || "1D";
+    artefact.effect = ($("#artEffect").value||"").trim() || "—";
+  }else{
+    artefact={name:"",type:"Standard",range:"Touch (Melee/Self)",charges:"",effect:""};
+  }
+  route('char-1');
 }
 
 /* Avatar */
@@ -629,29 +761,40 @@ function loadAvatar(e){
   avatarFilename = f.name || "portrait.png";
   const r=new FileReader(); r.onload = ev => { avatarDataURL = ev.target.result; $("#avatar").src=avatarDataURL; updateChar(); }; r.readAsDataURL(f);
 }
-function downloadAvatar(){
-  if(!avatarDataURL){ alert("No image uploaded yet."); return; }
-  const a=document.createElement("a");
-  const safe=($("#outName").innerText||"character").trim().replace(/[^a-z0-9_\-]+/gi,"_")||"character";
-  const ext=(avatarFilename.split(".").pop()||"png").toLowerCase();
-  a.href=avatarDataURL; a.download=`${safe}_portrait.${ext}`; document.body.appendChild(a); a.click(); a.remove();
+
+/* STEP 1 show/hide custom boxes */
+function onCommunityChange(){ $("#customCommunityBox").classList.toggle("hidden", $("#community").value!=="__custom__"); updateChar(); }
+function onRoleChange(){ $("#customRoleBox").classList.toggle("hidden", $("#role").value!=="__custom__"); updateChar(); }
+
+/* Gear with artefact */
+function currentGearList(){
+  const list=[...gear];
+  if(artefactOn){
+    const a=`Artefact: ${artefact.name} (${artefact.type}; ${artefact.range}; Charges: ${artefact.charges}; Effect: ${artefact.effect})`;
+    list.push(a);
+  }
+  return list;
 }
 
-/* STEP 1 logic: show/hide custom boxes */
-function onCommunityChange(){
-  const val=$("#community").value;
-  $("#customCommunityBox").classList.toggle("hidden", val!=="__custom__");
-  updateChar();
-}
-function onRoleChange(){
-  const val=$("#role").value;
-  $("#customRoleBox").classList.toggle("hidden", val!=="__custom__");
-  updateChar();
+/* Numbered gear (0# base not counting towards capacity) */
+function numberedGearLines(){
+  const base0 = `0#: Adventurer's Clothing; Backpack; Pouch`;
+  const rest = currentGearList().filter(it => it!=="Clothing" && it!=="Backpack");
+  return [base0, ...rest.map((it,i)=>`${i+1}#: ${it}`)];
 }
 
-/* Character update (includes custom + armor stamina) */
-function updateChar(){
-  // Inputs
+/* Armor bonus */
+function getEquippedArmor(){
+  const g=currentGearList();
+  const hasHeavy = g.some(x=>/^Heavy Armor\b/.test(x));
+  const hasArmor = g.some(x=>/^Armor\b/.test(x));
+  if(hasHeavy) return { type:"Heavy Armor", bonus:2, note:"Heavy Armor (+2 Stamina; ½ Move to Climb & Swim; -1D Dodge)" };
+  if(hasArmor) return { type:"Armor", bonus:1, note:"Armor (+1 Stamina; ½ Move to Climb & Swim)" };
+  return { type:"None", bonus:0, note:"Armor: None" };
+}
+
+/* Update Character Sheet */
+function updateChar(triggeredByAdd=false){
   const name=$("#name")?.value||"-";
   const home=$("#home")?.value||"-";
   const goal=$("#goal")?.value||"-";
@@ -659,15 +802,12 @@ function updateChar(){
   const commSel=$("#community")?.value||"-";
   const roleSel=$("#role")?.value||"-";
   const prof=parseInt($("#prof")?.value)||"-";
-  const hero=(prof!="-")?rollDice(6):"-";
 
-  // Custom names & skills
   const customCommName=($("#customCommunityName")?.value||"").trim();
   const customCommSkills=[($("#customCommunitySkill1")?.value||"").trim(),($("#customCommunitySkill2")?.value||"").trim()].filter(Boolean);
   const customRoleName=($("#customRoleName")?.value||"").trim();
   const customRoleSkills=[($("#customRoleSkill1")?.value||"").trim(),($("#customRoleSkill2")?.value||"").trim()].filter(Boolean);
 
-  // Displayed community/role names
   const commName = (commSel==="__custom__" ? (customCommName||"Custom Community") : commSel);
   const roleName = (roleSel==="__custom__" ? (customRoleName||"Custom Role") : roleSel);
 
@@ -675,97 +815,107 @@ function updateChar(){
   let langs=["Common"];
   const langBox=$("#languageChoice");
   if(commSel==="Human"){
-    if(langBox) langBox.classList.remove("hidden");
+    langBox?.classList.remove("hidden");
     let extras=[...($("#extraLang")?.selectedOptions||[])].map(o=>o.value);
     if(extras.length>2) extras=extras.slice(0,2);
     langs=langs.concat(extras);
-  } else {
-    if(langBox) langBox.classList.add("hidden");
+  }else{
+    langBox?.classList.add("hidden");
     if(commSel && commSel!=="-"){
       const tongue = (commSel==="__custom__") ? `${commName} tongue` : `${commSel} tongue`;
       langs.push(tongue);
     }
   }
 
-  // Skills
-  const baseCommSkills = (commSel==="__custom__") ? customCommSkills : (skillsDB[commSel]||[]);
-  const baseRoleSkills = (roleSel==="__custom__") ? customRoleSkills : (skillsDB[roleSel]||[]);
-  const skillsList = baseCommSkills.concat(baseRoleSkills).map(s=>`<li>${s}</li>`).join("");
+  // Skills with tags
+  const commSkills = (commSel==="__custom__") ? customCommSkills.map(s=>[s,""]) : (skillsDB[commSel]||[]);
+  const roleSkills = (roleSel==="__custom__") ? customRoleSkills.map(s=>[s,""]) : (skillsDB[roleSel]||[]);
+  const allSkills = [...commSkills, ...roleSkills];
+  $("#outSkills").innerHTML = allSkills.length ? allSkills.map(([s,t])=>`<li>${s}${t?` (${t})`:""}</li>`).join("") : "<li>—</li>";
 
-  // Spells
-  const spellsArcane={"Darksee":"Self, see in greyscale for +1D R, Far","Levitate":"Self, +1R, 1 vertical Near Move per Round","Missile":"Far, bolt of energy, 1 DMG","Protection":"Self, -1 DMG from 1 Attack per Round (Free Action; no Spell Drain)","Speak":"Self, communicate with any sentient being for +1D R","Teleport":"Self, to 1 previously visited spot, Far"};
-  const spellsHoly={"Bless":"Touch, +1D to 1 Proficiency Check next Round","Divine":"Touch, reveal beyond/within 1 structure, Near","Heal":"Touch, restore 1 Stamina point","Light":"Touch, as if day, for +1D R, Near","Smite":"Touch, Holy Weapon +1 DMG (Free Action; no Spell Drain)","Ward":"Far, prevent 1 Target’s 1 Move into your Melee area within +1D R"};
+  // Spells preview
   const sb=$("#spellBlock");
-  if(roleName==="Wizard"){ sb.innerHTML = "<ul>"+Object.entries(spellsArcane).map(([k,v])=>`<li>${k}: ${v}</li>`).join("")+"</ul>"; }
-  else if(roleName==="Cleric"){ sb.innerHTML = "<ul>"+Object.entries(spellsHoly).map(([k,v])=>`<li>${k}: ${v}</li>`).join("")+"</ul>"; }
-  else { sb.innerHTML = "<p>—</p>"; }
+  if(roleName==="Wizard"){
+    sb.innerHTML = "<ul>"+Object.keys(spellsArcane).map(k=>`<li>${k} (MIND)</li>`).join("")+"</ul>";
+  } else if(roleName==="Cleric"){
+    sb.innerHTML = "<ul>"+Object.keys(spellsHoly).map(k=>`<li>${k} (MIND)</li>`).join("")+"</ul>";
+  } else { sb.innerHTML = "<p>—</p>"; }
 
-  // Armor & Stamina
+  // Armor, Stamina, Carry cap
   const equip = getEquippedArmor();
-  const baseStamina = (prof!="-") ? prof : "-";
   const staminaTotal = (prof!="-") ? (prof + equip.bonus) : "-";
+  const carryCap = (prof!="-") ? (prof + 6) : "-"; // show only max slots
 
-  // Carry Capacity = Proficiency + 6
-  const carryCap = (prof!="-") ? (prof+6) : "-";
-
-  // Output to sheet
-  $("#outName").innerText=name;
-  $("#outHome").innerText=home;
-  $("#outGoal").innerText=goal;
-  $("#outApp").innerText=app;
-  $("#outCommunity").innerText=commName;
-  $("#outRole").innerText=roleName;
-  $("#outProf").innerText=prof;
-  $("#outStamina").innerText=staminaTotal;
+  // Identity & Stats
+  $("#outName").innerText=name; $("#outHome").innerText=home; $("#outGoal").innerText=goal; $("#outApp").innerText=app;
+  $("#outCommunity").innerText=commName; $("#outRole").innerText=roleName;
+  $("#outProf").innerText=prof; $("#outStamina").innerText=staminaTotal;
   $("#outArmorNote").innerText = (equip.type==="None") ? "Armor: None" : `Armor: ${equip.note}`;
-  $("#outHero").innerText=hero;
   $("#outLang").innerText=langs.join(", ");
-  $("#outCarry").innerText=carryCap;
-  $("#outSkills").innerHTML=skillsList || "<li>—</li>";
 
-  // Equipment numbered
-  $("#outGear").innerHTML = numberedGearLines().map(l=>`<li>${l}</li>`).join("");
+  // Hero Points (rolled at start; show breakdown)
+  const hpTotal=heroRoll?(heroRoll+(seasonedBonus?1:0)):"-";
+  const hpNote=heroRoll?(seasonedBonus?`(rolled 1d6 got ${heroRoll}; +1 Seasoned Adventurer → total ${hpTotal})`:`(rolled 1d6 got ${heroRoll} → total ${hpTotal})`):"—";
+  $("#outHeroTotal").innerText=hpTotal; $("#outHeroNote").innerText=hpNote;
+
+  // Equipment list + capacity
+  const eqLines = numberedGearLines();
+  const usedSlots = Math.max(eqLines.length-1,0);
+  const overCap = (prof!="-") && (usedSlots > carryCap);
+  $("#equipWarn").innerText = overCap ? "– Exceeding capacity: -1D penalty" : "";
+  $("#equipCarryLine").innerText = `Carry Capacity: ${carryCap}`;
+  $("#outGear").innerHTML = eqLines.map(l=>`<li>${l}</li>`).join("");
+
+  // Popup warn only first time you cross capacity via add/buy
+  if(triggeredByAdd){
+    if(overCap && !lastOverCap){ alert("-1D Penalty for exceeding your Carry Capacity"); }
+    lastOverCap = overCap;
+  }else{
+    lastOverCap = overCap;
+  }
 
   // Pouch values
   $("#gold").innerText=gp; $("#silver").innerText=sp;
   $("#outGold").innerText=gp; $("#outSilver").innerText=sp;
-  $("#outOther").innerText=(pouchOthers.length?pouchOthers.join("; "):"—");
+  $("#outOther").innerText=(pouchOthers.length ? pouchOthers.join("; ") : "—");
 
   // Image on sheet
   const aS=$("#avatarSheet");
   if(aS){ if(avatarDataURL){ aS.src=avatarDataURL; aS.style.display="block"; } else { aS.removeAttribute("src"); aS.style.display="none"; } }
 }
 
-/* Discord: Character (includes armor note) */
+/* Discord: Character */
 function buildDiscordChar(){
   const DIV=$("#dsDivider")?.value||"dash", FONT=$("#dsFont")?.value||"normal", COLOR=$("#dsColor")?.value||"none", FRAME=$("#dsFrame")?.value||"none";
   const divider=makeDivider(DIV), hdr=t=>colorize(fontify(frameTitle(t,FRAME),FONT),COLOR);
   const get=id=>(document.getElementById(id)?.innerText||"-").toString();
   const spellsText=document.getElementById("spellBlock").innerText.trim();
+  const carry=(document.getElementById("equipCarryLine")?.innerText||"Carry Capacity: -").replace(/^Carry Capacity:\s*/,"");
   const out=[];
   out.push(hdr("AGE OF ADVENTURE — CHARACTER SHEET")); out.push(divider);
   out.push(hdr("IDENTITY"));
   out.push(`Name: ${get("outName")}`); out.push(`Community: ${get("outCommunity")}`); out.push(`Role: ${get("outRole")}`); out.push(`Homeland: ${get("outHome")}`);
   if(get("outGoal")!=="-") out.push(`Goal: ${get("outGoal")}`); if(get("outApp")!=="-") out.push(`Appearance: ${get("outApp")}`);
-  if(avatarDataURL){ const safe=(get("outName")||"character").trim().replace(/[^a-z0-9_\-]+/gi,"_")||"character"; const ext=(($("#imgInput")?.files?.[0]?.name || "png").split(".").pop()||"png").toLowerCase(); out.push(`Image: ${safe}_portrait.${ext} (attach this file when posting)`); }
   out.push(divider);
   out.push(hdr("STATS"));
   out.push(`Proficiency: ${get("outProf")}`);
   out.push(`Stamina: ${get("outStamina")}`);
   out.push(`${get("outArmorNote")}`);
-  out.push(`Hero Points: ${get("outHero")}`);
-  out.push(`Carry Capacity: ${get("outCarry")}`);
+  const heroLine = `Hero Points: ${get("outHeroTotal")}`;
+  const heroNote = get("outHeroNote");
+  out.push(heroNote && heroNote!=="—" ? `${heroLine} ${heroNote}` : heroLine);
+  out.push(`Carry Capacity: ${carry}`);
+  out.push(`Languages: ${get("outLang")}`);
   out.push(divider);
-  out.push(hdr("LANGUAGES")); out.push(`Languages: ${get("outLang")}`); out.push(divider);
   out.push(hdr("SKILLS")); const skl=[...document.querySelectorAll("#outSkills li")].map(li=>li.innerText); if(skl.length) skl.forEach(s=>out.push(`• ${s}`)); else out.push("—"); out.push(divider);
   out.push(hdr("SPELLS")); out.push(spellsText || "—"); out.push(divider);
   out.push(hdr("POUCH")); out.push(`Gold: ${get("outGold")} GP`); out.push(`Silver: ${get("outSilver")} SP`); out.push(`Other: ${get("outOther")}`); out.push(divider);
   out.push(hdr("EQUIPMENT")); numberedGearLines().forEach(l=>out.push(l));
-  const needsAnsi = (COLOR!=="none"); return (needsAnsi?"```ansi\n":"```\n")+out.join("\n")+"\n```";
+  return "```\n"+out.join("\n")+"\n```";
 }
 async function copyDiscordChar(){ await copyText(buildDiscordChar()); }
 
-/* ---------- Companion logic ---------- */
+/* ---------- Companion ---------- */
 function updateAlly(){
   const sizeDefaults={ Small:{stamina:1,carry:"1#",pull:"2#",label:"Small (3 GP, 1#)"},
                        Medium:{stamina:2,carry:"3#",pull:"6#",label:"Medium (6 GP, 6#)"},
@@ -778,6 +928,7 @@ function updateAlly(){
   const skills=($("#allySkills")?.value||"").split(",").map(s=>s.trim()).filter(Boolean);
   const gear=($("#allyGear")?.value||"").split(",").map(s=>s.trim()).filter(Boolean);
   const notes=($("#allyNotes")?.value||"—").trim();
+  const temper=($("#allyTemper")?.value||"—").trim();
 
   $("#allyHeader").innerText="Animal Companion";
   $("#allyOutSize").innerText=d.label;
@@ -786,6 +937,7 @@ function updateAlly(){
   $("#allyOutStamina").innerText=$("#allyStamina").value;
   $("#allyOutCarry").innerText=$("#allyCarry").value;
   $("#allyOutPull").innerText=$("#allyPull").value;
+  $("#allyOutTemper").innerText=temper || "—";
   $("#allyOutNotes").innerText=notes || "—";
   $("#allyOutSkills").innerHTML = skills.length ? skills.map(s=>`<li>${s}</li>`).join("") : "<li>—</li>";
   $("#allyOutGear").innerHTML   = gear.length   ? gear.map(s=>`<li>${s}</li>`).join("")   : "<li>—</li>";
@@ -793,100 +945,170 @@ function updateAlly(){
 function resetAlly(){
   $("#allyName").value=""; $("#allyRole").value="";
   $("#allySize").value="Small"; $("#allyStamina").value=1; $("#allyCarry").value="1#"; $("#allyPull").value="2#";
-  $("#allySkills").value=""; $("#allyGear").value=""; $("#allyNotes").value="";
+  $("#allySkills").value=""; $("#allyTemper").value=""; $("#allyGear").value=""; $("#allyNotes").value="";
   updateAlly(); route('ally');
 }
 function buildDiscordAlly(){
-  const out=[];
-  out.push("```");
-  out.push("ANIMAL COMPANION");
-  out.push("────────");
-  out.push(`Name: ${$("#allyOutName").innerText}`);
-  out.push(`Type: ${$("#allyOutRole").innerText}`);
-  out.push(`Size: ${$("#allyOutSize").innerText}`);
-  out.push("────────");
-  out.push("STATS");
-  out.push(`Stamina: ${$("#allyOutStamina").innerText}`);
-  out.push(`Carry: ${$("#allyOutCarry").innerText}`);
-  out.push(`Pull: ${$("#allyOutPull").innerText}`);
-  out.push("────────");
-  out.push("SKILLS / TRAITS");
-  const s=[...document.querySelectorAll("#allyOutSkills li")].map(li=>li.innerText); out.push(s.length?s.join("\n"):"—");
-  out.push("────────");
-  out.push("GEAR");
-  const g=[...document.querySelectorAll("#allyOutGear li")].map(li=>li.innerText); out.push(g.length?g.join("\n"):"—");
-  out.push("────────");
-  out.push("NOTES");
-  out.push($("#allyOutNotes").innerText || "—");
-  out.push("```");
+  const out=[]; out.push("```"); out.push("ANIMAL COMPANION"); out.push("────────");
+  out.push(`Name: ${$("#allyOutName").innerText}`); out.push(`Type: ${$("#allyOutRole").innerText}`); out.push(`Size: ${$("#allyOutSize").innerText}`);
+  out.push("────────"); out.push("STATS"); out.push(`Stamina: ${$("#allyOutStamina").innerText}`); out.push(`Carry: ${$("#allyOutCarry").innerText}`); out.push(`Pull: ${$("#allyOutPull").innerText}`);
+  out.push("────────"); out.push("SKILLS"); const s=[...document.querySelectorAll("#allyOutSkills li")].map(li=>li.innerText); out.push(s.length?s.join("\n"):"—");
+  out.push("────────"); out.push("TEMPERAMENT"); out.push($("#allyOutTemper").innerText||"—");
+  out.push("────────"); out.push("GEAR"); const g=[...document.querySelectorAll("#allyOutGear li")].map(li=>li.innerText); out.push(g.length?g.join("\n"):"—");
+  out.push("────────"); out.push("NOTES"); out.push($("#allyOutNotes").innerText || "—"); out.push("```");
   return out.join("\n");
 }
 async function copyDiscordAlly(){ await copyText(buildDiscordAlly()); }
 
-/* ---------- Hireling logic ---------- */
-function updateHire(){
-  const name=($("#hireName")?.value||"-").trim(), role=($("#hireRole")?.value||"-").trim();
-  const cmm=($("#hireCmmSkill")?.value||"-").trim(), rsk=($("#hireRoleSkill")?.value||"-").trim();
-  const sta=$("#hireStamina")?.value||2, yn=$("#hireSpellYN")?.value||"No", spn=($("#hireSpellName")?.value||"—").trim();
-  const gear=($("#hireGear")?.value||"").split(",").map(s=>s.trim()).filter(Boolean);
-
-  $("#hireOutName").innerText=name||"-"; $("#hireOutRole").innerText=role||"-";
-  $("#hireOutStamina").innerText=sta;
-  $("#hireOutSkills").innerHTML = `<li>Community Skill: ${cmm||"—"}</li><li>Role Skill: ${rsk||"—"}</li>`;
-  $("#hireOutSpellYN").innerText=yn; $("#hireOutSpellName").innerText= (yn==="Yes" ? (spn||"—") : "—");
-  $("#hireOutGear").innerHTML = gear.length ? gear.map(s=>`<li>${s}</li>`).join("") : "<li>—</li>";
+/* ---------- Hireling ---------- */
+function buildSkillOptions(list){
+  return list.map(([name,tag])=>`<option>${name} (${tag})</option>`).join("");
 }
+function onHireCmmChange(){
+  const v=$("#hireCmmSelect").value;
+  const custom = (v==="__custom__");
+  $("#hireCmmCustomLabel").classList.toggle("hidden", !custom);
+  if(!custom){ $("#hireCmmSkill").value=""; }
+  updateHire();
+}
+function onHireRoleChange(){
+  const v=$("#hireRoleSelect").value;
+  const custom = (v==="__custom__");
+  $("#hireRoleCustomLabel").classList.toggle("hidden", !custom);
+  if(!custom){ $("#hireRoleSkill").value=""; }
+  updateHire();
+}
+function toggleHireSpell(){
+  const yn=$("#hireSpellYN").value==="Yes";
+  $("#hireSpellSelectLabel").classList.toggle("hidden", !yn);
+  $("#hireSpellCustomLabel").classList.add("hidden");
+  if(!yn){ $("#hireSpellName").value=""; }
+  if(yn) populateHireSpellSelect();
+}
+function onHireSpellChange(){
+  const v=$("#hireSpellSelect").value;
+  const custom = (v==="__custom__");
+  $("#hireSpellCustomLabel").classList.toggle("hidden", !custom);
+  if(!custom){ $("#hireSpellName").value=""; }
+  updateHire();
+}
+function populateHireSelectors(){
+  const cmmOptions = [
+    ...buildSkillOptions(skillsDB.Dwarf),
+    ...buildSkillOptions(skillsDB.Elf),
+    ...buildSkillOptions(skillsDB.Goblin),
+    ...buildSkillOptions(skillsDB.Halfling),
+    ...buildSkillOptions(skillsDB.Human),
+    ...buildSkillOptions(skillsDB.Orc),
+    `<option value="__custom__">Custom…</option>`
+  ];
+  $("#hireCmmSelect").innerHTML = `<option value="">— choose —</option>${cmmOptions.join("")}`;
+
+  const roleOptions = [
+    ...buildSkillOptions(skillsDB.Archer),
+    ...buildSkillOptions(skillsDB.Barbarian),
+    ...buildSkillOptions(skillsDB.Cleric),
+    ...buildSkillOptions(skillsDB.Rogue),
+    ...buildSkillOptions(skillsDB.Warrior),
+    ...buildSkillOptions(skillsDB.Wizard),
+    `<option value="__custom__">Custom…</option>`
+  ];
+  $("#hireRoleSelect").innerHTML = `<option value="">— choose —</option>${roleOptions.join("")}`;
+}
+function populateHireSpellSelect(){
+  const arc = Object.keys(spellsArcane).map(n=>`<option>${n} (Arcane, MIND)</option>`).join("");
+  const hol = Object.keys(spellsHoly).map(n=>`<option>${n} (Holy, MIND)</option>`).join("");
+  $("#hireSpellSelect").innerHTML = `<option value="">— choose —</option><optgroup label="Arcane">${arc}</optgroup><optgroup label="Holy">${hol}</optgroup><option value="__custom__">Custom…</option>`;
+}
+
+function parseNameFromTagged(s){
+  if(!s) return "";
+  return s.replace(/\s*\(.*?\)\s*$/,"").trim();
+}
+
+function updateHire(){
+  const name=($("#hireName")?.value||"-").trim();
+  const role=($("#hireRole")?.value||"-").trim();
+
+  // Community skill
+  let cmmSel=$("#hireCmmSelect")?.value||"";
+  let cmmText = cmmSel ? cmmSel : "";
+  if(cmmSel==="__custom__"){ cmmText = ($("#hireCmmSkill")?.value||"").trim(); }
+  // Role skill
+  let roleSel=$("#hireRoleSelect")?.value||"";
+  let roleText = roleSel ? roleSel : "";
+  if(roleSel==="__custom__"){ roleText = ($("#hireRoleSkill")?.value||"").trim(); }
+
+  const sta=$("#hireStamina")?.value||2;
+  const yn=$("#hireSpellYN")?.value||"No";
+
+  // Spell
+  let spellShown="—";
+  if(yn==="Yes"){
+    let spSel = $("#hireSpellSelect")?.value||"";
+    if(spSel==="__custom__"){
+      const custom = ($("#hireSpellName")?.value||"").trim();
+      spellShown = custom || "—";
+    }else if(spSel){
+      spellShown = parseNameFromTagged(spSel);
+    }
+  }
+
+  // Gear
+  const gearList=($("#hireGear")?.value||"").split(",").map(s=>s.trim()).filter(Boolean);
+
+  // Output
+  $("#hireOutName").innerText=name||"-";
+  $("#hireOutRole").innerText=role||"-";
+  $("#hireOutStamina").innerText=sta;
+  $("#hireOutSkills").innerHTML = `<li>Community Skill: ${cmmText||"—"}</li><li>Role Skill: ${roleText||"—"}</li>`;
+  $("#hireOutSpellYN").innerText=yn;
+  $("#hireOutSpellName").innerText=(yn==="Yes" ? (spellShown||"—") : "—");
+  $("#hireOutGear").innerHTML = gearList.length ? gearList.map(s=>`<li>${s}</li>`).join("") : "<li>—</li>";
+}
+
 function resetHire(){
   ["hireName","hireRole","hireCmmSkill","hireRoleSkill","hireGear","hireSpellName"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
-  $("#hireStamina").value=2; $("#hireSpellYN").value="No"; updateHire(); route('hire');
+  $("#hireCmmSelect").selectedIndex=0; $("#hireRoleSelect").selectedIndex=0;
+  $("#hireStamina").value=2; $("#hireSpellYN").value="No";
+  $("#hireSpellSelectLabel").classList.add("hidden"); $("#hireSpellCustomLabel").classList.add("hidden");
+  $("#hireCmmCustomLabel").classList.add("hidden"); $("#hireRoleCustomLabel").classList.add("hidden");
+  updateHire(); route('hire');
 }
+
 function buildDiscordHire(){
-  const out=[];
-  out.push("```");
-  out.push("HIRELING");
-  out.push("────────");
-  out.push(`Name: ${$("#hireOutName").innerText}`);
-  out.push(`Role / Job: ${$("#hireOutRole").innerText}`);
-  out.push("────────");
-  out.push("STATS");
-  out.push(`Stamina: ${$("#hireOutStamina").innerText}`);
-  out.push(`Carry: 6#`);
-  out.push(`Pull: 6# per 1H (–1D / 1H)`);
-  out.push("────────");
-  out.push("SKILLS");
-  [...document.querySelectorAll("#hireOutSkills li")].forEach(li=>out.push(li.innerText));
-  out.push("────────");
-  out.push("MAGIC");
-  out.push(`Can cast 1 spell? ${$("#hireOutSpellYN").innerText}`);
-  out.push(`Spell Name: ${$("#hireOutSpellName").innerText}`);
-  out.push("────────");
-  out.push("GEAR");
-  const g=[...document.querySelectorAll("#hireOutGear li")].map(li=>li.innerText); out.push(g.length?g.join("\n"):"—");
-  out.push("```");
-  return out.join("\n");
+  const out=[]; out.push("```"); out.push("HIRELING"); out.push("────────");
+  out.push(`Name: ${$("#hireOutName").innerText}`); out.push(`Role / Job: ${$("#hireOutRole").innerText}`);
+  out.push("────────"); out.push("STATS"); out.push(`Stamina: ${$("#hireOutStamina").innerText}`); out.push(`Carry: 6#`); out.push(`Pull: 6# per 1H (–1D)`);
+  out.push("────────"); out.push("SKILLS"); [...document.querySelectorAll("#hireOutSkills li")].forEach(li=>out.push(li.innerText));
+  out.push("────────"); out.push("MAGIC"); out.push(`Can cast 1 spell? ${$("#hireOutSpellYN").innerText}`); out.push(`Spell: ${$("#hireOutSpellName").innerText}`);
+  out.push("────────"); out.push("GEAR"); const g=[...document.querySelectorAll("#hireOutGear li")].map(li=>li.innerText); out.push(g.length?g.join("\n"):"—");
+  out.push("```"); return out.join("\n");
 }
 async function copyDiscordHire(){ await copyText(buildDiscordHire()); }
 
-/* ---------- Init ---------- */
+/* ---------- Init / Reset ---------- */
 function resetAll(){
-  gp=12+rollDice(6); sp=rollDice(6); gear=["Clothing","Backpack"]; purchaseHistory=[]; pouchOthers=[];
-  avatarDataURL=""; avatarFilename="";
-  ["community","role","name","home","goal","app","prof","pouchOtherInput",
-   "customCommunityName","customCommunitySkill1","customCommunitySkill2",
-   "customRoleName","customRoleSkill1","customRoleSkill2"].forEach(id=>{ const el=document.getElementById(id); if(el){ if(el.tagName==="SELECT") el.selectedIndex=0; else el.value=""; } });
-  $("#customCommunityBox").classList.add("hidden");
-  $("#customRoleBox").classList.add("hidden");
+  gp=12+rollDice(6); sp=rollDice(6); heroRoll=rollDice(6); seasonedBonus=false; seasonedMode=false;
+  artefactOn=false; artefact={name:"",type:"Standard",range:"Touch (Melee/Self)",charges:"",effect:""}; lastOverCap=false;
+  gear=["Clothing","Backpack"]; purchaseHistory=[]; pouchOthers=[];
+  ["community","role","name","home","goal","app","prof","pouchOtherInput","seasonGold"].forEach(id=>{ const el=document.getElementById(id); if(el){ if(el.tagName==="SELECT") el.selectedIndex=0; else el.value=""; } });
+  ["seasonHeroPlus1","seasonArtefactOn"].forEach(id=>{ const el=document.getElementById(id); if(el) el.checked=false; });
+  $("#artefactBox").classList.add("hidden"); $("#seasonedBox").classList.add("hidden");
+  $("#customCommunityBox").classList.add("hidden"); $("#customRoleBox").classList.add("hidden");
   const img=$("#imgInput"); if(img) img.value="";
   const r=document.querySelector('input[name="otherDest"][value="pouch"]'); if(r) r.checked=true;
   ["dsDivider","dsFont","dsColor","dsFrame"].forEach(id=>{ const el=document.getElementById(id); if(el) el.selectedIndex=0; });
-  updateChar(); route('home');
+  renderStore(); initShop(); populateHireSelectors(); updateChar(); updateAlly(); updateHire(); route('home');
 }
+
 function init(){
-  initShop(); renderStore();
-  gp=12+rollDice(6); sp=rollDice(6); gear=["Clothing","Backpack"]; purchaseHistory=[]; pouchOthers=[];
-  updateChar(); updateAlly(); updateHire();
-  route('home');
+  renderStore(); initShop(); populateHireSelectors();
+  gp=12+rollDice(6); sp=rollDice(6); heroRoll=rollDice(6); seasonedBonus=false; seasonedMode=false;
+  gear=["Clothing","Backpack"]; purchaseHistory=[]; pouchOthers=[]; lastOverCap=false;
+  updateChar(); updateAlly(); updateHire(); route('home');
 }
+
 init();
 </script>
 </body>
