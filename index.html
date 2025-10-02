@@ -37,6 +37,15 @@
   .muted{color:#6d5b3f;font-style:italic}
   .warn{color:var(--warn);font-weight:700}
   .hidden{display:none !important}
+
+  /* --- Read-First Modal (always shows on start; link clickable) --- */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}
+  .modal-backdrop.show{display:flex}
+  .modal{background:#fffefb;border:2px solid var(--gold);border-radius:12px;max-width:720px;width:92%;padding:18px 20px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+  .modal h3{font-family:"Cinzel",serif;margin:0 0 6px;color:var(--head)}
+  .modal p{margin:8px 0}
+  .modal .modal-actions{text-align:right;margin-top:10px}
+
   @media print{
     body{background:#fff}
     body *{visibility:hidden !important;height:0 !important}
@@ -48,6 +57,24 @@
 <body>
 
 <h1>Age of Adventure – Tools by Nylo</h1>
+
+<!-- READ THIS FIRST (modal, shows every load; link is clickable) -->
+<div id="readFirstModal" class="modal-backdrop" onclick="if(event.target===this) closeReadFirst()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rfTitle">
+    <h3 id="rfTitle">Age of Adventure — Read This First</h3>
+    <p><strong>Starting Gold:</strong> Confirm your starting gold with your GM before buying gear—tables may use different amounts.</p>
+    <p><strong>Hero Points:</strong> These are rolled at the start of each session with your GM.</p>
+    <p class="muted">This tool was made by Nylo, a fan of the game (I also made a Roll20 sheet).</p>
+    <p>
+      <a href="https://adrian-young-games.itch.io/" target="_blank" rel="noopener">
+        Buy the game to support the creator
+      </a>
+    </p>
+    <div class="modal-actions">
+      <button class="btn next-btn" onclick="closeReadFirst()">OK</button>
+    </div>
+  </div>
+</div>
 
 <!-- HOME -->
 <div class="panel" id="home">
@@ -89,12 +116,12 @@
   <div class="choice-grid">
     <div class="choice-card">
       <h3>New Adventurer</h3>
-      <p class="muted">Standard random Gold & Hero Point roll.</p>
+      <p class="muted">Standard random Gold & Silver if selected later; Hero Points are rolled in session.</p>
       <button class="btn next-btn" onclick="chooseNew()">Choose New</button>
     </div>
     <div class="choice-card">
       <h3>Seasoned Adventurer</h3>
-      <p class="muted">Override Gold, +1 Hero Point, optional Magical Artefact.</p>
+      <p class="muted">Override Gold, optional +1 Hero Point, optional Magical Artefact.</p>
       <button class="btn link-btn" onclick="showSeasoned()">Choose Seasoned</button>
     </div>
   </div>
@@ -103,10 +130,10 @@
     <h3>Seasoned Options</h3>
     <div class="grid2">
       <label>Override Gold (GP)
-        <input id="seasonGold" type="number" min="0" step="1" placeholder="leave blank for random">
+        <input id="seasonGold" type="number" min="0" step="1" placeholder="leave blank to decide in Step 1">
       </label>
       <label>Add +1 Hero Point?
-        <select id="seasonHeroPlus1Sel">
+        <select id="seasonHeroPlus1Sel" onchange="updateChar()">
           <option value="No" selected>No</option>
           <option value="Yes">Yes (+1)</option>
         </select>
@@ -160,6 +187,32 @@
 <!-- ========== CHARACTER CREATOR (steps) ========== -->
 <div class="step hidden" id="char-1">
   <h2>Step 1: Community & Role</h2>
+
+  <!-- NEW: Starting Money Controls -->
+  <div class="panel">
+    <h3>Starting Money</h3>
+    <div class="grid2">
+      <label>Starting Gold
+        <select id="goldMode" onchange="onGoldModeChange()">
+          <option value="max">Max (18 GP)</option>
+          <option value="random">Random (12 + 1D6)</option>
+          <option value="custom">Custom…</option>
+        </select>
+      </label>
+      <label id="goldCustomWrap" class="hidden">Custom GP Amount
+        <input id="goldCustom" type="number" min="0" step="1" placeholder="enter GP amount" oninput="applyStartingMoney()">
+      </label>
+      <label>Starting Silver
+        <select id="silverMode" onchange="applyStartingMoney()">
+          <option value="random">Random (1D6)</option>
+          <option value="zero">0 — rolled in game</option>
+        </select>
+      </label>
+      <div class="grow"></div>
+    </div>
+    <p class="muted" style="margin:0">These choices immediately set your Pouch values.</p>
+  </div>
+
   <div class="grid2">
     <label>Community
       <select id="community" onchange="onCommunityChange()">
@@ -411,8 +464,8 @@
     <p><strong>Proficiency:</strong> <span id="outProf">-</span></p>
     <p><strong>Stamina:</strong> <span id="outStamina">-</span></p>
     <p id="outArmorNote" class="muted" style="margin-top:-6px">Armor: None</p>
-    <p><strong>Hero Points:</strong> <span id="outHeroTotal">-</span></p>
-    <p id="outHeroNote" class="muted" style="margin-top:-6px">—</p>
+    <p><strong>Hero Points:</strong> <span id="outHeroTotal">D6</span></p>
+    <p id="outHeroNote" class="muted" style="margin-top:-6px"><u>rolled in session</u></p>
     <p><strong>Languages:</strong> <span id="outLang">Common</span></p>
   </div>
 
@@ -677,9 +730,9 @@ function frameTitle(txt,frame){ if(frame==="none")return txt; if(frame==="bracke
 
 /* ---------- Character state ---------- */
 function rollDice(s){ return Math.floor(Math.random()*s)+1; }
-let gp, sp, gear, purchaseHistory=[];
+let gp=0, sp=0, gear, purchaseHistory=[];
 let avatarDataURL="", avatarFilename="", pouchOthers=[];
-let heroRoll=0, seasonedBonus=false, seasonedMode=false;
+let seasonedBonus=false, seasonedMode=false;
 let artefactOn=false, artefact={name:"",type:"Standard",range:"Touch (Melee/Self)",charges:"",effect:""};
 let lastOverCap=false;
 
@@ -874,7 +927,6 @@ function revertToNew(){
   $("#seasonHeroPlus1Sel").value="No";
   $("#seasonArtefactSel").value="No";
   $("#artefactBox").classList.add("hidden");
-  gp=12+rollDice(6); sp=rollDice(6); heroRoll=rollDice(6);
   updateChar(); route('char-1');
 }
 
@@ -896,6 +948,33 @@ function clearAvatar(){
 /* STEP 1 show/hide custom boxes */
 function onCommunityChange(){ $("#customCommunityBox").classList.toggle("hidden", $("#community").value!=="__custom__"); updateChar(); }
 function onRoleChange(){ $("#customRoleBox").classList.toggle("hidden", $("#role").value!=="__custom__"); updateChar(); }
+
+/* NEW: Starting money handlers */
+function onGoldModeChange(){
+  const mode = $("#goldMode").value;
+  $("#goldCustomWrap").classList.toggle("hidden", mode!=="custom");
+  applyStartingMoney();
+}
+function applyStartingMoney(){
+  // Starting Gold
+  const mode = $("#goldMode").value;
+  if(mode==="max"){ gp = 18; }
+  else if(mode==="random"){ gp = 12 + rollDice(6); }
+  else if(mode==="custom"){
+    const v = parseInt($("#goldCustom").value||"0",10);
+    gp = isNaN(v)||v<0 ? 0 : v;
+  }
+  // Seasoned override still respected if user typed it earlier and Step 0 is used.
+  const goldStr=$("#seasonGold").value?.trim()||"";
+  if(goldStr!==""){
+    const val=parseInt(goldStr,10);
+    if(!isNaN(val) && val>=0) gp = val;
+  }
+  // Starting Silver
+  const sMode=$("#silverMode").value;
+  sp = (sMode==="random") ? rollDice(6) : 0;
+  updateChar();
+}
 
 /* Gear with artefact */
 function currentGearList(){
@@ -984,10 +1063,18 @@ function updateChar(triggeredByAdd=false){
   $("#outArmorNote").innerText = (equip.type==="None") ? "Armor: None" : `Armor: ${equip.note}`;
   $("#outLang").innerText=langs.join(", ");
 
-  // Hero Points
-  const hpTotal=heroRoll?(heroRoll+(seasonedBonus?1:0)):"-";
-  const hpNote=heroRoll?(seasonedBonus?`(rolled 1d6 got ${heroRoll}; +1 Seasoned Adventurer → total ${hpTotal})`:`(rolled 1d6 got ${heroRoll} → total ${hpTotal})`):"—";
-  $("#outHeroTotal").innerText=hpTotal; $("#outHeroNote").innerText=hpNote;
+  // Hero Points: display only (no rolling)
+  const seasonedPlusOne = ($("#seasonHeroPlus1Sel")?.value==="Yes");
+  seasonedBonus = seasonedPlusOne; // keep state consistent
+  const heroDisplay = seasonedPlusOne ? "D6+1 (max 6)" : "D6";
+  $("#outHeroTotal").innerText = heroDisplay;
+  // Underlined note only when NOT seasoned +1
+  const noteEl = $("#outHeroNote");
+  if(seasonedPlusOne){
+    noteEl.innerText = "—";
+  }else{
+    noteEl.innerHTML = "<u>rolled in session</u>";
+  }
 
   // Equipment list + capacity & warning
   const eqLines = numberedGearLines();
@@ -1052,9 +1139,8 @@ function buildDiscordChar(){
   out.push(`Proficiency: ${get("outProf")}`);
   out.push(`Stamina: ${get("outStamina")}`);
   out.push(`${get("outArmorNote")}`);
-  const heroLine = `Hero Points: ${get("outHeroTotal")}`;
-  const heroNote = get("outHeroNote");
-  out.push(heroNote && heroNote!=="—" ? `${heroLine} ${heroNote}` : heroLine);
+  const heroLine = `Hero Points: ${( $("#seasonHeroPlus1Sel")?.value==="Yes" ? "D6+1 (max 6)" : "D6 (rolled in session)" )}`;
+  out.push(heroLine);
   out.push(divider);
 
   // Skills
@@ -1085,7 +1171,6 @@ function buildDiscordChar(){
   out.push(hdr("NOTES"));
   out.push(notes?notes:"—");
 
-  /* changed: wrap in ansi fence so colors render in Discord */
   return "```ansi\n"+out.join("\n")+"\n```";
 }
 async function copyDiscordChar(){ await copyText(buildDiscordChar()); }
@@ -1115,7 +1200,7 @@ function updateAlly(){
   $("#allyOutTemper").innerText=temper || "—";
   $("#allyOutNotes").innerText=notes || "—";
   $("#allyOutSkills").innerHTML = skills.length ? skills.map(s=>`<li>${s}</li>`).join("") : "<li>—</li>";
-  $("#allyOutGear").innerHTML   = gear.length   ? gear.map(s=>`<li>${s}</li>`).join("")   : "<li>—</li>";
+  $("#allyOutGear").innerHTML   = gear.length   ? gear.map(s=>`<li>${s}</li>`).join("") : "<li>—</li>";
 }
 function resetAlly(){
   $("#allyName").value=""; $("#allyRole").value="";
@@ -1286,7 +1371,6 @@ function buildDiscordHire(){
   out.push("NOTES");
   out.push($("#hireOutNotes").innerText || "—");
 
-  /* changed: wrap in ansi fence so colors render (even though this block has no color codes yet) */
   return "```ansi\n"+out.join("\n")+"\n```";
 }
 async function copyDiscordHire(){ await copyText(buildDiscordHire()); }
@@ -1296,7 +1380,7 @@ function buildState(){
   return {
     version: 3,
     route: currentRoute,
-    gp, sp, heroRoll, seasonedBonus, seasonedMode,
+    gp, sp, seasonedBonus, seasonedMode,
     gear, purchaseHistory, pouchOthers,
     artefactOn, artefact,
     avatarDataURL, avatarFilename,
@@ -1374,7 +1458,7 @@ function downloadJSONWithName(kind){
 
 /* wipe UI + memory before applying a loaded JSON */
 function wipeForLoad(){
-  gp=0; sp=0; heroRoll=0; seasonedBonus=false; seasonedMode=false;
+  gp=0; sp=0; seasonedBonus=false; seasonedMode=false;
   artefactOn=false; artefact={name:"",type:"Standard",range:"Touch (Melee/Self)",charges:"",effect:""}; lastOverCap=false;
   gear=[]; purchaseHistory=[]; pouchOthers=[];
   ["community","role","name","home","goal","app","prof","pouchOtherInput","seasonGold","customCommunityName","customCommunitySkill1","customCommunitySkill2","customRoleName","customRoleSkill1","customRoleSkill2","charNotes"].forEach(id=>{ const el=document.getElementById(id); if(el){ if(el.tagName==="SELECT") el.selectedIndex=0; else el.value=""; } });
@@ -1396,7 +1480,7 @@ function applyState(st){
   try{
     wipeForLoad();
 
-    gp=st.gp??gp; sp=st.sp??sp; heroRoll=st.heroRoll??heroRoll; seasonedBonus=!!st.seasonedBonus; seasonedMode=!!st.seasonedMode;
+    gp=st.gp??gp; sp=st.sp??sp; seasonedBonus=!!st.seasonedBonus; seasonedMode=!!st.seasonedMode;
     gear=Array.isArray(st.gear)?st.gear:["Clothing","Backpack"]; purchaseHistory=Array.isArray(st.purchaseHistory)?st.purchaseHistory:[]; pouchOthers=Array.isArray(st.pouchOthers)?st.pouchOthers:[];
     artefactOn=!!st.artefactOn; artefact=st.artefact||{name:"",type:"Standard",range:"Touch (Melee/Self)",charges:"",effect:""};
 
@@ -1404,8 +1488,9 @@ function applyState(st){
     if(avatarDataURL){ $("#avatar").src=avatarDataURL; } else { clearAvatar(); }
 
     if(st.char){
-      $("#name").value=st.char.name||""; $("#home").value=st.char.home||""; $("#goal").value=st.char.goal||"";
-      $("#app").value=st.char.app||""; $("#community").value=st.char.community||""; $("#role").value=st.char.role||"";
+      $("#name").value=st.char.name||""; $("#home").value=st.char.home||"";
+      $("#goal").value=st.char.goal||""; $("#app").value=st.char.app||"";
+      $("#community").value=st.char.community||""; $("#role").value=st.char.role||"";
       $("#prof").value=st.char.prof||"";
       $("#customCommunityName").value=st.char.customCommunityName||"";
       $("#customCommunitySkill1").value=st.char.customCommunitySkill1||"";
@@ -1474,9 +1559,14 @@ function uploadJSON(e){
   r.readAsText(f);
 }
 
+/* ---------- Read-First modal controls ---------- */
+function openReadFirst(){ $("#readFirstModal").classList.add("show"); }
+function closeReadFirst(){ $("#readFirstModal").classList.remove("show"); }
+
 /* ---------- Init / Reset ---------- */
 function resetAll(){
-  gp=12+rollDice(6); sp=rollDice(6); heroRoll=rollDice(6); seasonedBonus=false; seasonedMode=false;
+  // Defaults before Step 1 choices: set to zero and wait for user selection
+  gp=0; sp=0; seasonedBonus=false; seasonedMode=false;
   artefactOn=false; artefact={name:"",type:"Standard",range:"Touch (Melee/Self)",charges:"",effect:""}; lastOverCap=false;
   gear=["Clothing","Backpack"]; purchaseHistory=[]; pouchOthers=[];
   ["community","role","name","home","goal","app","prof","pouchOtherInput","seasonGold","customCommunityName","customCommunitySkill1","customCommunitySkill2","customRoleName","customRoleSkill1","customRoleSkill2","charNotes"].forEach(id=>{ const el=document.getElementById(id); if(el){ if(el.tagName==="SELECT") el.selectedIndex=0; else el.value=""; } });
@@ -1484,17 +1574,28 @@ function resetAll(){
   if(document.getElementById("seasonArtefactSel")) document.getElementById("seasonArtefactSel").value="No";
   $("#artefactBox").classList.add("hidden"); $("#seasonedBox").classList.add("hidden");
   $("#customCommunityBox").classList.add("hidden"); $("#customRoleBox").classList.add("hidden");
+  // Step 1 starting money defaults
+  if($("#goldMode")) $("#goldMode").value="max";
+  if($("#silverMode")) $("#silverMode").value="random";
+  $("#goldCustomWrap").classList.add("hidden"); $("#goldCustom").value="";
   clearAvatar();
   const r=document.querySelector('input[name="otherDest"][value="pouch"]'); if(r) r.checked=true;
   ["dsDivider","dsFont","dsColor","dsFrame"].forEach(id=>{ const el=document.getElementById(id); if(el) el.selectedIndex=0; });
   $("#wpnType").value="1H"; $("#wpnSilver").checked=false; updateWeaponHint();
-  renderStore(); initShop(); populateHireSelectors(); updateChar(); updateAlly(); updateHire(); route('home');
+  renderStore(); initShop(); populateHireSelectors();
+  applyStartingMoney(); // apply initial starting money selection
+  updateChar(); updateAlly(); updateHire(); route('home');
 }
 
 function init(){
   renderStore(); initShop(); populateHireSelectors();
-  gp=12+rollDice(6); sp=rollDice(6); heroRoll=rollDice(6); seasonedBonus=false; seasonedMode=false;
   gear=["Clothing","Backpack"]; purchaseHistory=[]; pouchOthers=[]; lastOverCap=false;
+  // Step 1 default selections
+  if($("#goldMode")) $("#goldMode").value="max";
+  if($("#silverMode")) $("#silverMode").value="random";
+  $("#goldCustomWrap").classList.add("hidden"); $("#goldCustom").value="";
+  // Apply starting money immediately
+  applyStartingMoney();
   updateWeaponHint(); updateChar(); updateAlly(); updateHire(); route('home');
 
   // Hook up home loader
@@ -1502,10 +1603,15 @@ function init(){
   if(homeInput){
     homeInput.addEventListener('change', uploadJSON);
   }
+
+  // Always show Read-First modal on startup (link is clickable; non-blocking)
+  openReadFirst();
+
+  // ESC to close modal
+  document.addEventListener('keydown', (e)=>{ if(e.key==="Escape") closeReadFirst(); });
 }
 
 init();
 </script>
 </body>
 </html>
-
